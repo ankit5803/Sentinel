@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Env / secrets
+.env
+.env.*
+*.pem
+
+# Data / models (large / generated)
+ml/data/*.csv
+ml/data/*.jsonl
+*.pt
+*.bin
+mlruns/
+mlartifacts/
+
+# Node / frontend
+node_modules/
+.next/
+frontend/dist/
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Redis clone dump files
+redis-clone/*.aof
+redis-clone/*.rdb
