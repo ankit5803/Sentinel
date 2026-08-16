@@ -12,8 +12,9 @@ env/
 *.pem
 
 # Data / models (large / generated)
-ml/data/*.csv
-ml/data/*.jsonl
+ml/data/raw/hingcorpus/
+ml/data/processed/*.csv
+!ml/data/processed/hinglish_reviewed.csv
 *.pt
 *.bin
 mlruns/
@@ -37,4 +38,3 @@ frontend/dist/
 # Redis clone dump files
 redis-clone/*.aof
 redis-clone/*.rdb
-ml/data/raw
