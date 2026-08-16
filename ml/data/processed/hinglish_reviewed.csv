@@ -1,0 +1,53 @@
+sentence,weak_label,reviewer_label,matched_profanity_terms,matched_violence_phrases,source
+go safed boy,SAFE,SAFE,,,hingcorpus_weak_labeled
+bb what s up dost kaise ho aap,SAFE,SAFE,,,hingcorpus_weak_labeled
+"he yaar Tumhe bhulna chata hu, Or tumhare lot aane ka bhi he.",SAFE,SAFE,,,hingcorpus_weak_labeled
+Abhi tak hum isko design inspiration kehkar bacha rahe thee. Lekin Maharaj ne uspar bhi paani diya,SAFE,SAFE,,,hingcorpus_weak_labeled
+mujhe lag rha normal vala rare hai actually,SAFE,SAFE,,,hingcorpus_weak_labeled
+Itna Tu mujhay apni mehbooba par Nahi jitna Logun ko Imran khan par hay,SAFE,SAFE,,,hingcorpus_weak_labeled
+it shows often but el chutiya comes back in,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+"conjunctiva,sclera,cornea, tear film sala sab ek hee haiiii... sab milke chutiya bana rahe hai.",NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+Now who let these chutiya body out? Where your leash at Tommy?,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+dubey kya chutiya argument h or last me emoji add krke to or jyada diya,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+09:07pm temp. 3.3c wich. 3.3c hum. 93  vento s vel. 0.0 max. 0.9km/h. tot.0.00mm. barom. 1026.70hpa  ev-now!,SAFE,SAFE,,,hingcorpus_weak_labeled
+gobar khana dunga agar tere gharwale chod diye tho tu abi aja tuje bi anna khana,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chod,,hingcorpus_weak_labeled
+Abbe Chutiya He Kya Tu.... I Mean Sachi Bade Wala.... Don't you have some Hot water or some different water which you need to take rather than Normal water...... I Mean Sachi Yaar Bahot Haters Dekhe But I Salute to be Best Hater Ever Kasam Se You are the best replacement for RaGa,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+Haan bhai lekin inko ko kaun btaye bc ko acting samjhte ye,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+gs mc advocate sidhe aise advocate,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,mc,,hingcorpus_weak_labeled
+kuch nahi school kula aur gya sab cheating tricks sala itna course liya javascript liye aur sab bekar 🥲🥲 the pain of us,SAFE,SAFE,,,hingcorpus_weak_labeled
+black out wali raat ni guzari😂,SAFE,SAFE,,,hingcorpus_weak_labeled
+"Banco de M©xico al peso, no MORENA",SAFE,SAFE,,,hingcorpus_weak_labeled
+bc padhte likhte ho tum log kabhi? kya likhte ho har spelling galat. thoda padh lo terrorism bhi ho jaayega.,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+few of you on my tl make me think ye chutiya kon hai isko maine kab follow kiya,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+"Yeh chutiya kehta tha k ka DNA badal donga, saala suar kahi ka,",NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+aur black list/grey list main pakistan ko kaun bc mc lay kar aya tha,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc;mc,,hingcorpus_weak_labeled
+bc ye kaise hua dekhte hi meri body,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+Kapil Misra Ji kya nhi kya. Sahi Jute Jihadi ko marna chahiye tha.,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,jihadi,,hingcorpus_weak_labeled
+bc camera mil gaya ha tou kuch b bana ky post karlo gy?,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+bc ye mera quote nhi bna kar deta,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+saare tag krlo idhar mujhe 🚶🏻‍♀️ mai ni krti bc,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+Tu khud hi bol raha khud hi mazak uda raha proper chutiya lag raha tbh,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+"thanks to the support of people like you, khan academy has helped hundreds of millions of learners around the world.✨ we are just getting started. all donations to khan academy though december 31 will be matcheddoubling your impact! 💖 donate today as we go !",SAFE,SAFE,,,hingcorpus_weak_labeled
+hala ka kana ng summa cum laude,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,laude,,hingcorpus_weak_labeled
+bc bata itachi hota hai mein ?????,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+the disappointment prathik had on his face when salman was friendly and jst karan and not bashing him le prathik : itna ro roke sympathy manga tha ..aur bhai ne aise ignore kiya mereko STOP TARGETING KARAN,SAFE,SAFE,,,hingcorpus_weak_labeled
+...    ./. gpa  summa cum laude    computer science       . university of north carolina at charlotte.        .,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,laude,,hingcorpus_weak_labeled
+Mc ram ne desh k lie kya kiya ki in mc ne aisa kam kiya inki itni chahiye ki inke bhagvaan bachane aaye . Madar....,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,mc,,hingcorpus_weak_labeled
+Boys- aey hum aise sakhti s rehte hein hein aise. *Le girl gives a smile and passes by* Yar mujhe dekh k hasi thi yaar wo^ Abey hat bc mujhe dekh k hasi thi saaley. Yar kya pyari bachi thi. 😍♥ Le their friends: OYEEEE BHABI BHABII...,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
+writers ko kya bole i mean prachi ko achha rakhte but uska character thoda strong to bna hi sakte the bilkul bechari bna diya hai mai to relate bhi nai kr usse ab,SAFE,SAFE,,,hingcorpus_weak_labeled
+Son manga de parsitos,SAFE,SAFE,,,hingcorpus_weak_labeled
+©    .  ©  ®   ©,SAFE,SAFE,,,hingcorpus_weak_labeled
+You're not missing anything. Chutiya bas de rha h thodi der me bhikari mujhe bhi block kar dega kyuki toh iski maar hi li hai maine 😂😂,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+"golmaal (original), meetha (original), satte pe satta, khiladi, dil tera aashiq, baadshah, one two ka four, phir bhi dil hai hindustani, bajrangi bhaijaan, pk, hum hai rahi pyaar ke",NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,meetha,,hingcorpus_weak_labeled
+lo hara con ?!!,SAFE,SAFE,,,hingcorpus_weak_labeled
+How your tweet is different from a s b!got? Kal ko sanghi topi walon ki pic tweet karenge to mat.,SAFE,SAFE,,,hingcorpus_weak_labeled
+"alexa play dil ko karar aaya for fd 😭❤ my babies met after months ❤😭❤. really i am getting a actual reality of the idiom, sabar ka fal meetha hota hai!!!🤩",NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,meetha,,hingcorpus_weak_labeled
+Video banata h to bolta h finance advice ni h Or yaha twitter pe call deke liquidate h Vishudh chutiya lagta h mujhe ye,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+nothing feels more awkward than a random kid saying didi mai badi hokar aapke jaisi when she doesn t even know kya chutiya life hai iss didi ki,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+shame on the so called tabhi ye sab tikait gang k paise bnane aur sikh community mei se jo gye hai unke mauj masti karne k bahane hai aise logo ko to beech sadak mei hi goli maar deni chahiye jinhone uske sath ye sab kiya,POTENTIAL_THREAT,POTENTIAL_THREAT,,goli maar,hingcorpus_weak_labeled
+saket ji tum chutiya gaye ho yaar tumko ho gayi hai adat ungali karne ki koi adami kuch likhta hai tumko vaha jake comments ya tweet accha na lage to unfollow kar do ye extortion wali kyo behave like man not p sy watching other tweets unnecessary respond to him,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+Dream 11 chutiya paise kr nhi toh hm sb dream 11 uninstall kr denga,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+E chutiya ka kaun dekhega video,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,chutiya,,hingcorpus_weak_labeled
+haan i know teri behen bahut achi hai jo behen apna net share kare vo to world s best sis,SAFE,SAFE,,,hingcorpus_weak_labeled
+"Theyll be salty and J their whole life! Khud ka season nai sambhala gaya iss season mein aake guide karenge, wah!",SAFE,SAFE,,,hingcorpus_weak_labeled
+to 2 inning se legend ban gaya bc saale,NON_VIOLENT_ABUSE,NON_VIOLENT_ABUSE,bc,,hingcorpus_weak_labeled
