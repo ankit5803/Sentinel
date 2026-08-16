@@ -37,3 +37,4 @@ frontend/dist/
 # Redis clone dump files
 redis-clone/*.aof
 redis-clone/*.rdb
+ml/data/raw
