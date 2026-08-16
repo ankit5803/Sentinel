@@ -15,8 +15,11 @@ env/
 ml/data/raw/hingcorpus/
 ml/data/processed/*.csv
 !ml/data/processed/hinglish_reviewed.csv
+ml/training/artifacts/
 *.pt
 *.bin
+*.safetensors
+*.joblib
 mlruns/
 mlartifacts/
 
