@@ -14,12 +14,28 @@ a multimodal RAG chatbot.
 
 ---
 
-## Status: Phase 2 complete (Data + Baseline + DistilBERT)
+## Status: Phase 2 complete (Backend API + Database + Risk Engine)
 
 This README documents everything done so far. The system currently has two
-trained, evaluated text classifiers. The FastAPI backend, Risk Engine,
-MLOps loop (MLflow/Evidently/Prefect), and dashboard are the next phases —
-see `PROJECT_CONTEXT.md` for the full day-by-day plan and current progress log.
+trained, evaluated text classifiers, integrated into a live FastAPI backend 
+with dynamic language routing, business-logic risk scaling, and PostgreSQL 
+logging. The MLOps loop (MLflow/Evidently/Prefect) and dashboard are the 
+next phases — see `PROJECT_CONTEXT.md` for the full day-by-day plan and 
+current progress log.
+
+---
+
+## Architecture: The Backend API & Risk Engine
+
+The Sentinel backend is not just a simple model wrapper; it includes heuristic gating and robust data engineering principles.
+
+*   **API Gateway:** Built with FastAPI. Uses Pydantic for strict schema validation, ensuring malformed payloads are rejected before consuming compute resources.
+*   **Dynamic Language Routing:** Incoming text is evaluated using `langdetect` combined with a custom Hinglish heuristic override. English text is routed to the English DistilBERT model, while code-mixed Hindi-English is routed to the specialized multilingual model.
+*   **The Risk Engine (Business Logic):** Raw ML probabilities are insufficient for Trust & Safety teams. The Risk Engine intercepts the model's output and applies heuristic rules:
+    *   *Target Specificity:* Scans for keywords indicating a specific victim or location (e.g., "you", "house", "tu", "ghar").
+    *   *Immediacy:* Scans for timeline indicators (e.g., "tonight", "now", "aaj").
+    *   *Decision Matrix:* Combines model probability with these context escalators to output a final, explainable risk bucket (`SAFE`, `REVIEW`, or `HIGH RISK`). It also includes a safety valve to override false-positive keyword matches on low-probability text.
+*   **The Vault (Database):** SQLAlchemy ORM connected to a Dockerized PostgreSQL instance with connection pooling (`pool_pre_ping=True`) to survive free-tier cloud deployment limits. Every request, prediction, and risk decision is logged for audit and downstream drift detection.
 
 ---
 
@@ -29,7 +45,7 @@ Sentinel trains **two independently specialized classifiers** — one for
 English, one for Hinglish (code-mixed Hindi-English) — rather than one merged
 multilingual model. A language-specific model can specialize on that
 language's patterns instead of being diluted across two very different text
-distributions. The backend will route incoming text to the correct model
+distributions. The backend successfully routes incoming text to the correct model
 based on detected language.
 
 ---
@@ -153,9 +169,8 @@ accumulation (effective batch 16) — tuned to fit a 4GB VRAM GPU
 
 ---
 
-## Repository structure (Phase 1)
+## Repository structure
 
-```
 ml/data/
 ├── raw/                          # source data (large files gitignored)
 ├── processed/                    # cleaned + split datasets
@@ -170,10 +185,26 @@ ml/training/
 ├── train_baseline.py             # TF-IDF + Logistic Regression, per language
 ├── train_distilbert.py           # DistilBERT fine-tuning, per language
 └── artifacts/                    # trained models (gitignored — large files)
-```
 
-## Reproducing this phase
+backend/
+├── app/
+│   ├── api/                      # (scaffolded)
+│   ├── core/
+│   │   └── config.py             # Environment & dynamic model pathing
+│   ├── db/
+│   │   └── database.py           # SQLAlchemy Engine + Connection Pool
+│   ├── ml/
+│   │   └── risk_engine.py        # Business logic for risk scaling
+│   ├── models/
+│   │   └── models.py             # PredictionLog Postgres schema
+│   ├── main.py                   # FastAPI app, Router, & Lifespan ML loaders
+│   └── schemas.py                # Pydantic data validation contracts
+└── check_db.py                   # Diagnostic script to verify database writes
 
+
+## Reproducing the project
+
+### 1. Data & ML Pipeline
 ```bash
 cd ml/data
 python parse_threat.py
@@ -188,18 +219,17 @@ python train_baseline.py english
 python train_baseline.py hinglish
 python train_distilbert.py english
 python train_distilbert.py hinglish
-```
+2. Live API & Database
+Run PostgreSQL locally via Docker, then start the FastAPI server:
 
-Raw source data (THREAT corpus, HingCorpus, profanity lexicon) is not
-included in this repo due to file size and licensing — see `PROJECT_CONTEXT.md`
-for exact download sources.
+Bash
+# Spin up the database
+docker run --name sentinel-postgres -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=sentinel -p 5432:5432 -d postgres:15
 
----
+# Start the API
+cd backend
+uvicorn app.main:app --reload
+Access the interactive Swagger UI at http://127.0.0.1:8000/docs to test live predictions.
 
-## What's next
-
-Days 4-6 of the build plan: FastAPI backend, PostgreSQL schema, Redis
-integration, and the Risk Engine (turning a raw model prediction into a
-structured `{threat_probability, risk_level, immediacy, target_identified,
-confidence, reason}` response instead of a bare classification). Full
-day-by-day plan and live progress log in `PROJECT_CONTEXT.md`.
+What's next
+Days 7-9 of the build plan: Implementing MLflow tracking and the Model Registry. This will version our trained artifacts and act as the promotion gate for future self-healing retraining loops. Full day-by-day plan and live progress log in PROJECT_CONTEXT.md
