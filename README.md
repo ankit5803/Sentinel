@@ -9,18 +9,15 @@ Built as a solo, 19-day project (August 2026) to demonstrate end-to-end ML
 engineering: from raw data sourcing through a self-healing MLOps loop, not
 just a notebook that trains a model once.
 
-Companion project (built separately, credited on this author's CV): **Athena**,
-a multimodal RAG chatbot.
-
 ---
 
 ## Status: Phase 2 complete (Backend API + Database + Risk Engine)
 
 This README documents everything done so far. The system currently has two
-trained, evaluated text classifiers, integrated into a live FastAPI backend 
-with dynamic language routing, business-logic risk scaling, and PostgreSQL 
-logging. The MLOps loop (MLflow/Evidently/Prefect) and dashboard are the 
-next phases — see `PROJECT_CONTEXT.md` for the full day-by-day plan and 
+trained, evaluated text classifiers, integrated into a live FastAPI backend
+with dynamic language routing, business-logic risk scaling, and PostgreSQL
+logging. The MLOps loop (MLflow/Evidently/Prefect) and dashboard are the
+next phases — see `PROJECT_CONTEXT.md` for the full day-by-day plan and
 current progress log.
 
 ---
@@ -29,13 +26,13 @@ current progress log.
 
 The Sentinel backend is not just a simple model wrapper; it includes heuristic gating and robust data engineering principles.
 
-*   **API Gateway:** Built with FastAPI. Uses Pydantic for strict schema validation, ensuring malformed payloads are rejected before consuming compute resources.
-*   **Dynamic Language Routing:** Incoming text is evaluated using `langdetect` combined with a custom Hinglish heuristic override. English text is routed to the English DistilBERT model, while code-mixed Hindi-English is routed to the specialized multilingual model.
-*   **The Risk Engine (Business Logic):** Raw ML probabilities are insufficient for Trust & Safety teams. The Risk Engine intercepts the model's output and applies heuristic rules:
-    *   *Target Specificity:* Scans for keywords indicating a specific victim or location (e.g., "you", "house", "tu", "ghar").
-    *   *Immediacy:* Scans for timeline indicators (e.g., "tonight", "now", "aaj").
-    *   *Decision Matrix:* Combines model probability with these context escalators to output a final, explainable risk bucket (`SAFE`, `REVIEW`, or `HIGH RISK`). It also includes a safety valve to override false-positive keyword matches on low-probability text.
-*   **The Vault (Database):** SQLAlchemy ORM connected to a Dockerized PostgreSQL instance with connection pooling (`pool_pre_ping=True`) to survive free-tier cloud deployment limits. Every request, prediction, and risk decision is logged for audit and downstream drift detection.
+- **API Gateway:** Built with FastAPI. Uses Pydantic for strict schema validation, ensuring malformed payloads are rejected before consuming compute resources.
+- **Dynamic Language Routing:** Incoming text is evaluated using `langdetect` combined with a custom Hinglish heuristic override. English text is routed to the English DistilBERT model, while code-mixed Hindi-English is routed to the specialized multilingual model.
+- **The Risk Engine (Business Logic):** Raw ML probabilities are insufficient for Trust & Safety teams. The Risk Engine intercepts the model's output and applies heuristic rules:
+  - _Target Specificity:_ Scans for keywords indicating a specific victim or location (e.g., "you", "house", "tu", "ghar").
+  - _Immediacy:_ Scans for timeline indicators (e.g., "tonight", "now", "aaj").
+  - _Decision Matrix:_ Combines model probability with these context escalators to output a final, explainable risk bucket (`SAFE`, `REVIEW`, or `HIGH RISK`). It also includes a safety valve to override false-positive keyword matches on low-probability text.
+- **The Vault (Database):** SQLAlchemy ORM connected to a Dockerized PostgreSQL instance with connection pooling (`pool_pre_ping=True`) to survive free-tier cloud deployment limits. Every request, prediction, and risk decision is logged for audit and downstream drift detection.
 
 ---
 
@@ -172,39 +169,39 @@ accumulation (effective batch 16) — tuned to fit a 4GB VRAM GPU
 ## Repository structure
 
 ml/data/
-├── raw/                          # source data (large files gitignored)
-├── processed/                    # cleaned + split datasets
-├── parse_threat.py               # parses raw THREAT corpus -> clean CSV
-├── weak_label_hinglish.py        # samples HingCorpus + weak-labels via lexicon
-├── review_sample.py              # interactive manual label review tool
-├── audit_lexicon.py              # flags suspect lexicon entries
-├── clean_lexicon.py              # applies lexicon cleanup rules
-└── build_training_set.py         # builds per-language train/val/test splits
+├── raw/ # source data (large files gitignored)
+├── processed/ # cleaned + split datasets
+├── parse_threat.py # parses raw THREAT corpus -> clean CSV
+├── weak_label_hinglish.py # samples HingCorpus + weak-labels via lexicon
+├── review_sample.py # interactive manual label review tool
+├── audit_lexicon.py # flags suspect lexicon entries
+├── clean_lexicon.py # applies lexicon cleanup rules
+└── build_training_set.py # builds per-language train/val/test splits
 
 ml/training/
-├── train_baseline.py             # TF-IDF + Logistic Regression, per language
-├── train_distilbert.py           # DistilBERT fine-tuning, per language
-└── artifacts/                    # trained models (gitignored — large files)
+├── train_baseline.py # TF-IDF + Logistic Regression, per language
+├── train_distilbert.py # DistilBERT fine-tuning, per language
+└── artifacts/ # trained models (gitignored — large files)
 
 backend/
 ├── app/
-│   ├── api/                      # (scaffolded)
-│   ├── core/
-│   │   └── config.py             # Environment & dynamic model pathing
-│   ├── db/
-│   │   └── database.py           # SQLAlchemy Engine + Connection Pool
-│   ├── ml/
-│   │   └── risk_engine.py        # Business logic for risk scaling
-│   ├── models/
-│   │   └── models.py             # PredictionLog Postgres schema
-│   ├── main.py                   # FastAPI app, Router, & Lifespan ML loaders
-│   └── schemas.py                # Pydantic data validation contracts
-└── check_db.py                   # Diagnostic script to verify database writes
-
+│ ├── api/ # (scaffolded)
+│ ├── core/
+│ │ └── config.py # Environment & dynamic model pathing
+│ ├── db/
+│ │ └── database.py # SQLAlchemy Engine + Connection Pool
+│ ├── ml/
+│ │ └── risk_engine.py # Business logic for risk scaling
+│ ├── models/
+│ │ └── models.py # PredictionLog Postgres schema
+│ ├── main.py # FastAPI app, Router, & Lifespan ML loaders
+│ └── schemas.py # Pydantic data validation contracts
+└── check_db.py # Diagnostic script to verify database writes
 
 ## Reproducing the project
 
 ### 1. Data & ML Pipeline
+
 ```bash
 cd ml/data
 python parse_threat.py
@@ -232,4 +229,5 @@ uvicorn app.main:app --reload
 Access the interactive Swagger UI at http://127.0.0.1:8000/docs to test live predictions.
 
 What's next
-Days 7-9 of the build plan: Implementing MLflow tracking and the Model Registry. This will version our trained artifacts and act as the promotion gate for future self-healing retraining loops. Full day-by-day plan and live progress log in PROJECT_CONTEXT.md
+Days 7-9 of the build plan: Implementing MLflow tracking and the Model Registry. This will version our trained artifacts and act as the promotion gate for future self-healing retraining loops. Full day-by-day plan and live progress log in PROJECT_CONTEXT.md.
+```
