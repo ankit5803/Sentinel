@@ -14,7 +14,7 @@ a multimodal RAG chatbot.
 
 ---
 
-## Status: Phase 1 complete (Data + Baseline + DistilBERT)
+## Status: Phase 2 complete (Data + Baseline + DistilBERT)
 
 This README documents everything done so far. The system currently has two
 trained, evaluated text classifiers. The FastAPI backend, Risk Engine,
