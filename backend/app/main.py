@@ -3,8 +3,9 @@ import re
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from transformers import pipeline
 import langdetect
+import mlflow
+import mlflow.transformers
 
 from app.core.config import get_settings
 from app.schemas import AnalyzeRequest, RiskDecision
@@ -24,26 +25,24 @@ risk_engine = SentinelRiskEngine()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Executes once when the server starts. Loads the heavy ML models into memory.
+    Executes once when the server starts. Loads the heavy ML models into memory
+    directly from the MLflow Model Registry using the @production alias.
     """
     print("⏳ Booting Sentinel API...")
-    print(f"Loading English model from: {settings.ENGLISH_MODEL_PATH}")
+    
+    # Point the backend to our local MLflow Tracking Server
+    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    
+    print(f"Fetching English model from Registry: {settings.ENGLISH_MODEL_URI}")
+    print(f"Fetching Hinglish model from Registry: {settings.HINGLISH_MODEL_URI}")
     
     try:
-        # Load Hugging Face pipelines using your fine-tuned artifacts
-        models["english"] = pipeline(
-            "text-classification", 
-            model=settings.ENGLISH_MODEL_PATH, 
-            tokenizer=settings.ENGLISH_MODEL_PATH
-        )
-        models["hinglish"] = pipeline(
-            "text-classification", 
-            model=settings.HINGLISH_MODEL_PATH, 
-            tokenizer=settings.HINGLISH_MODEL_PATH
-        )
-        print("✅ All ML models hot-loaded successfully.")
+        # Fetch the @production model dynamically
+        models["english"] = mlflow.transformers.load_model(settings.ENGLISH_MODEL_URI)
+        models["hinglish"] = mlflow.transformers.load_model(settings.HINGLISH_MODEL_URI)
+        print("✅ All ML models fetched and hot-loaded successfully.")
     except Exception as e:
-        print(f"❌ Failed to load models. Ensure training artifacts exist. Error: {e}")
+        print(f"❌ Failed to load models from MLflow. Ensure MLflow server is running on port 5000. Error: {e}")
     
     yield # The application runs while yielded
     

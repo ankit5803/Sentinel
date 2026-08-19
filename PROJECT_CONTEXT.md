@@ -76,3 +76,105 @@ local Docker setup. Must be FREE (no paid tiers). Plan:
 - **Redis clone:** Python, asyncio, raw sockets, custom RESP parser
 
 ## Architecture (target end state)
+
+```text
+User message → API Gateway (FastAPI) → Pre-processing → Language Detection
+  → [English] → English Threat Detection Model (DistilBERT, fine-tuned on THREAT corpus)
+  → [Hinglish] → Hinglish Threat Detection Model (DistilBERT, fine-tuned on weak-labeled Hinglish data)
+  → (rules layer + context/semantic layer applied per-language before final model)
+  → Risk Engine (probability × severity × immediacy × target specificity → risk level)
+  → Decision (SAFE / REVIEW / HIGH RISK)
+  → Logging + Postgres
+  → Drift Detection (Evidently, watching incoming data + prediction distributions, per language)
+  → [if drift threshold crossed] Retraining Pipeline (Prefect, per-language retrain)
+  → Model Evaluation Gate (must beat current production model, per language)
+  → MLflow Model Registry → Deploy (or reject if it doesn't beat prod)
+Risk Engine output shape (not just {"threat": true}):
+
+JSON
+{
+  "threat_probability": 0.94,
+  "risk_level": "HIGH",
+  "immediacy": "HIGH",
+  "target_identified": true,
+  "confidence": 0.91,
+  "reason": "Explicit intent + targeted threat language"
+}
+Classification categories: SAFE / NON-VIOLENT ABUSE / POTENTIAL THREAT / VIOLENT THREAT
+
+Day-by-day plan (Sentinel, days 1-19 — full month, Redis clone postponed)
+Days 1-3: Data collection/prep, TF-IDF+LogReg baseline, DistilBERT fine-tune. Lock real metrics (precision/recall/F1/latency) before touching infra.
+
+Days 4-6: FastAPI backend, Postgres schema, Redis integration, Risk Engine logic. Fully working locally before adding MLOps layers.
+
+Days 7-9: MLflow tracking + model registry + eval gate (new model must beat production to deploy).
+
+Days 10-13: Evidently drift detection + Prefect retraining trigger. Protect this time — it's the core "wow" loop. Extra day vs original plan since full month is available.
+
+Day 14: End-to-end test: simulate drift live, confirm auto-retrain-and-promote loop actually works. Do this early enough to fix bugs.
+
+Day 15: Docker Compose + GitHub Actions CI/CD.
+
+Days 16-17: Dashboard (Next.js) + Prometheus/Grafana (back in scope now — more time available; still first thing cut if behind).
+
+Days 18-19: Buffer, demo video, README polish, final QA pass.
+
+Redis clone — POSTPONED
+Not part of this month. Full 16-19 days now go to Sentinel alone. Revisit the Redis
+clone plan (TCP server, RESP parser, core commands, persistence, benchmarking) as a
+separate future project once Sentinel ships.
+
+Data sourcing note (sensitive topic — be deliberate)
+Use existing public, licensed hate-speech/threat-language datasets (not scraped real
+threats). Frame publicly (README, demo video, LinkedIn post) as AI-safety engineering,
+not "look what dangerous prompts I can trigger." Keep tone professional and clearly
+safety-oriented throughout.
+
+Files built so far (repo structure)
+Plaintext
+ml/data/
+├── raw/
+│   ├── threat/VideoCommentsThreatCorpus.txt          (THREAT corpus, real data)
+│   ├── hingcorpus/concatenated_train_final_shuffled.txt  (gitignored, 4.9GB — not in git)
+│   ├── hingcorpus/concatenated_validation.txt         (gitignored, 507MB — not in git)
+│   └── profanity_lexicon/Hinglish_Profanity_List.csv  (cleaned, 136 terms; .bak = original backup)
+├── processed/
+│   ├── threat_clean.csv                (parsed THREAT corpus)
+│   ├── hinglish_weak_labeled.csv        (gitignored — regeneratable)
+│   ├── hinglish_reviewed.csv            (KEPT in git — manual review work, not regeneratable)
+│   ├── english_{train,val,test}.csv     (gitignored — regeneratable)
+│   └── hinglish_{train,val,test}.csv    (gitignored — regeneratable)
+├── parse_threat.py          — parses raw THREAT corpus txt -> clean CSV
+├── weak_label_hinglish.py   — reservoir-samples HingCorpus + weak-labels via lexicon + violence phrases
+├── review_sample.py         — interactive manual spot-check tool for weak labels
+├── audit_lexicon.py         — scans lexicon for out-of-range severity / suspect common words / duplicates
+├── clean_lexicon.py         — one-time bulk cleanup (explicit remove list + severity<5 threshold w/ allowlist)
+└── build_training_set.py    — merges into per-language train/val/test splits (SEPARATE models, not merged)
+
+ml/training/
+├── train_baseline.py        — TF-IDF + LogisticRegression baseline, run per language
+├── train_distilbert.py      — DistilBERT fine-tuning (weighted loss, 4GB-VRAM-tuned), run per language
+├── register_v1_models.py    — Registers DistilBERT models to MLflow Model Registry
+└── artifacts/                (gitignored — model files, large)
+    ├── english_baseline_model.joblib
+    ├── hinglish_baseline_model.joblib
+    ├── english_distilbert/   (completed)
+    └── hinglish_distilbert/  (completed)
+
+backend/
+├── app/
+│   ├── api/                 (empty for now)
+│   ├── core/
+│   │   ├── config.py        (Environment handling & dynamic MLflow registry paths)
+│   ├── db/
+│   │   ├── database.py      (SQLAlchemy Engine + Connection Pool)
+│   ├── ml/
+│   │   ├── risk_engine.py   (Target/Immediacy Keyword heuristics)
+│   ├── models/
+│   │   ├── models.py        (PredictionLog Postgres table)
+│   ├── schemas.py           (Pydantic Data Contracts)
+│   └── main.py              (FastAPI setup + langdetect router + dynamic MLflow loads)
+└── check_db.py              (Test script to verify Postgres writes)
+
+infra/, frontend/, docs/  — scaffolded, empty, not yet built
+```
