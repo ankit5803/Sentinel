@@ -39,7 +39,7 @@ def send_payloads(samples, traffic_type: str, count: int = 15):
     for i in range(count):
         text = random.choice(samples)
         try:
-            res = requests.post(API_URL, json={"text": text}, timeout=5)
+            res = requests.post(API_URL, json={"text": text}, timeout=35)
             if res.status_code == 200:
                 success += 1
                 data = res.json()

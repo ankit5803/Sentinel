@@ -1,4 +1,3 @@
-# ml/training/retrain_pipeline.py
 from prefect import task, flow
 import pandas as pd
 from sqlalchemy import create_engine
@@ -8,7 +7,8 @@ import time
 # Import our Eval Gate!
 from eval_gate import run_arena
 
-DB_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/sentinel")
+# FIX 1: Corrected Database URL for Docker Compose
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/sentinel_db")
 
 @task(name="1. Extract Live Traffic", retries=2, retry_delay_seconds=5)
 def extract_live_data(language: str):
@@ -30,14 +30,14 @@ def train_challenger(language: str, row_count: int, mock: bool = True):
     if mock:
         print("⏩ MOCK MODE ON: Simulating a 15-minute DistilBERT GPU training job...")
         time.sleep(3) # Simulate training time for the tutorial
-        # We will just point to the existing distilbert folder to simulate the output
-        challenger_path = f"./artifacts/{language.lower()}_distilbert"
+        # FIX 2: Point to the new artifact location
+        challenger_path = f"backend/app/ml/artifacts/{language.lower()}_distilbert"
     else:
         # This would trigger your actual train_distilbert.py via subprocess
         print("🔥 REAL MODE: Booting up PyTorch and CUDA...")
         import subprocess
         subprocess.run(["python", "train_distilbert.py"])
-        challenger_path = f"./artifacts/{language.lower()}_distilbert_v2"
+        challenger_path = f"backend/app/ml/artifacts/{language.lower()}_distilbert_v2"
         
     print(f"✅ Challenger model saved at {challenger_path}")
     return challenger_path
@@ -46,7 +46,8 @@ def train_challenger(language: str, row_count: int, mock: bool = True):
 def run_evaluation_gate(language: str, challenger_uri: str):
     print(f"⚔️ [Task 3] Sending Challenger to the Arena against Production...")
     
-    test_data_path = f"../data/processed/{language.lower()}_test.csv"
+    # FIX 3: Corrected path from root directory
+    test_data_path = f"ml/data/processed/{language.lower()}_test.csv"
     target_class = "VIOLENT_THREAT" if language.lower() == "english" else "NON_VIOLENT_ABUSE"
     
     # Call the exact arena function we built on Day 7!

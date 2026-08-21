@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 import os
 
 # Connect to the local Postgres database (The Vault)
-DB_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/sentinel")
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/sentinel_db")
 
 def check_drift(language: str, reference_csv_path: str):
     print(f"\n{'='*50}")
@@ -77,7 +77,7 @@ def check_drift(language: str, reference_csv_path: str):
     return dataset_drift
 
 if __name__ == "__main__":
-    ENGLISH_TRAIN_PATH = "../data/processed/english_train.csv"
+    ENGLISH_TRAIN_PATH = "ml/data/processed/english_train.csv"
     
     check_drift(
         language="English",

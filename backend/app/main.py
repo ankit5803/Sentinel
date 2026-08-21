@@ -1,10 +1,12 @@
-# backend/app/main.py
 import re
+import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 import langdetect
+import mlflow
+from mlflow.tracking import MlflowClient
 from transformers import pipeline
 
 from app.core.config import get_settings
@@ -25,27 +27,49 @@ risk_engine = SentinelRiskEngine()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Executes once when the server starts. Loads the heavy ML models into memory
-    directly from the absolute container path resolved via Path(__file__).
+    Executes once when the server starts. Loads the heavy ML models into memory.
     """
     print("⏳ Booting Sentinel API...")
     
-    # Resolve absolute paths inside the container (/app/ml/artifacts/...)
-    BASE_DIR = Path(__file__).resolve().parent 
-    eng_dir = BASE_DIR / "ml" / "artifacts" / "english_distilbert"
-    hing_dir = BASE_DIR / "ml" / "artifacts" / "hinglish_distilbert"
-
+    # Force the environment variable so MLflow absolutely cannot ignore it
+    os.environ["MLFLOW_TRACKING_URI"] = settings.MLFLOW_TRACKING_URI
+    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    
     try:
-        print(f"Loading English model from: {eng_dir}")
-        models["english"] = pipeline("text-classification", model=str(eng_dir), tokenizer=str(eng_dir))
+        print(f"Connecting to MLflow at {settings.MLFLOW_TRACKING_URI}...")
+        client = MlflowClient()
 
-        print(f"Loading Hinglish model from: {hing_dir}")
-        models["hinglish"] = pipeline("text-classification", model=str(hing_dir), tokenizer=str(hing_dir))
+        # 1. Manually resolve the alias to a hard version number to bypass the MLflow bug
+        eng_model_info = client.get_model_version_by_alias("Sentinel-English-Model", "production")
+        eng_version = eng_model_info.version
+        print(f"✅ Found English Model @production (Version {eng_version})")
+        
+        hing_model_info = client.get_model_version_by_alias("Sentinel-Hinglish-Model", "production")
+        hing_version = hing_model_info.version
+        print(f"✅ Found Hinglish Model @production (Version {hing_version})")
 
-        print("✅ All ML models hot-loaded successfully from local disk!")
+        # 2. Download the models using the hard version number
+        print(f"⬇️ Downloading weights from MLflow Server...")
+        models["english"] = mlflow.transformers.load_model(f"models:/Sentinel-English-Model/{eng_version}")
+        models["hinglish"] = mlflow.transformers.load_model(f"models:/Sentinel-Hinglish-Model/{hing_version}")
+
+        print("✅ All ML models hot-loaded successfully from MLflow!")
+        
     except Exception as e:
-        print(f"❌ Failed to load local models: {e}")
-        raise e
+        print(f"⚠️ MLflow connection or model fetch failed: {e}")
+        print("🔄 Falling back to local container artifacts...")
+        
+        BASE_DIR = Path(__file__).resolve().parent 
+        eng_dir = BASE_DIR / "ml" / "artifacts" / "english_distilbert"
+        hing_dir = BASE_DIR / "ml" / "artifacts" / "hinglish_distilbert"
+        
+        try:
+            models["english"] = pipeline("text-classification", model=str(eng_dir), tokenizer=str(eng_dir))
+            models["hinglish"] = pipeline("text-classification", model=str(hing_dir), tokenizer=str(hing_dir))
+            print("✅ Local fallback successful. Models loaded from disk.")
+        except Exception as fallback_e:
+            print(f"❌ Critical Failure. Both MLflow and local fallback failed: {fallback_e}")
+            raise fallback_e
     
     yield
     
@@ -59,13 +83,14 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
 @app.get("/health", summary="Health Check Endpoint")
 def health_check():
     """
     Simple health check endpoint to verify that the API is running.
-    Returns a JSON response with status and message.
     """
     return {"status": "ok", "message": "API is running."}
+
 @app.post("/api/v1/analyze", response_model=RiskDecision)
 def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     # 1. Language Detection & Routing

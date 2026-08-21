@@ -7,8 +7,9 @@ import torch
 import os
 from transformers import pipeline # <-- Added this import so the Challenger can load!
 
-# Connect to local MLflow
-mlflow.set_tracking_uri("http://localhost:5000")
+# Ensure the Arena explicitly connects to the Dockerized MLflow server
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
 def run_arena(language: str, challenger_uri: str, test_data_path: str, target_class: str):
     print(f"\n{'='*50}")

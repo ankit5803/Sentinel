@@ -2,13 +2,14 @@
 
 ## Part 1: Architecture Code Map (Chronological Flow)
 
-### Stage 0: The Cold Start (Server Boot)
+### Stage 0: The Cold Start (Server Boot & MLflow Handshake)
 
 _Where it happens: `backend/app/main.py` and `backend/app/core/config.py`_
 
 - **Database Check:** SQLAlchemy uses `backend/app/db/database.py` to ping the PostgreSQL container and ensure the `PredictionLog` table (`backend/app/models/models.py`) exists.
-- **MLflow Handshake:** The backend reaches out to the MLflow Tracking Server using settings from `backend/app/core/config.py`.
-- **Dynamic Model Loading:** `mlflow.transformers.load_model()` fetches the models tagged with the `@production` alias and hot-loads them into the global `models` dictionary in memory.
+- **MLflow Handshake:** The backend reaches out to the MLflow Tracking Server using environment settings from `backend/app/core/config.py`.
+- **Dynamic Version Resolution:** Bypasses direct alias-fetching network bugs by using `MlflowClient.get_model_version_by_alias()` to programmatically resolve `@production` aliases to hard version numbers.
+- **Resilient Artifact Streaming & Fallback:** `mlflow.transformers.load_model()` streams heavy model weights over HTTP (with extended Gunicorn timeouts in Docker). If network retrieval fails, it executes a seamless fail-safe fallback to local container artifacts. Models are hot-loaded into the global `models` dictionary in memory.
 
 ### Stage 1: Request Validation
 
@@ -83,34 +84,34 @@ _Where it happens: `ml/training/eval_gate.py` (Triggered by Stage 8)_
 
 ### 1. Backend, Systems & Concurrency
 
-- [ ] **FastAPI Lifespan Context Manager (`@asynccontextmanager`):** Why `lifespan` replaces deprecated startup/shutdown event handlers to manage state (loading heavy ML models into memory once, cleaning up VRAM on teardown).
+- [x] **FastAPI Lifespan Context Manager (`@asynccontextmanager`):** Why `lifespan` replaces deprecated startup/shutdown event handlers to manage state (loading heavy ML models into memory once, cleaning up VRAM on teardown).
 - [ ] **Asynchronous vs. Synchronous Execution:** The difference between `async def` and regular `def` in FastAPI. Why ML model inference (CPU/GPU-bound) and synchronous database drivers run inside standard `def` threadpools to avoid blocking the ASGI event loop.
-- [ ] **Pydantic V2 & Data Serialization:** Request parsing, type coercion, field constraints, schema validation, and how Pydantic protects endpoints from malformed payloads.
-- [ ] **Database Connection Pooling & ORM:** How SQLAlchemy engine pools connections (`pool_size`, `max_overflow`), how sessions manage transactions (`db.add()`, `db.commit()`), and why `get_db` uses a generator with `yield`.
-- [ ] **Environment Configuration Management:** Decoupling code from deployment environments using `pydantic-settings` (`BaseSettings`) and 12-Factor App design principles.
-- [ ] **Direct vs. Indirect Data Ingestion:** Why analytics and drift scripts use `psycopg2`/`pd.read_sql` for binary streams directly from PostgreSQL instead of making slow, memory-heavy HTTP GET requests to the FastAPI layer.
+- [x] **Pydantic V2 & Data Serialization:** Request parsing, type coercion, field constraints, schema validation, and how Pydantic protects endpoints from malformed payloads.
+- [x] **Database Connection Pooling & ORM:** How SQLAlchemy engine pools connections (`pool_size`, `max_overflow`), how sessions manage transactions (`db.add()`, `db.commit()`), and why `get_db` uses a generator with `yield`.
+- [x] **Environment Configuration Management:** Decoupling code from deployment environments using `pydantic-settings` (`BaseSettings`) and 12-Factor App design principles.
+- [x] **Direct vs. Indirect Data Ingestion:** Why analytics and drift scripts use `psycopg2`/`pd.read_sql` for binary streams directly from PostgreSQL instead of making slow, memory-heavy HTTP GET requests to the FastAPI layer.
 
 ### 2. Machine Learning, NLP & Hardware
 
-- [ ] **DistilBERT Architecture & Transformer Trade-offs:** Knowledge distillation (60% smaller, 40% faster than BERT-base while retaining 97% language understanding). Attention mechanisms, tokenization subwords, truncation, and padding.
-- [ ] **Handling Severe Class Imbalance:** Why standard Cross-Entropy Loss fails on rare positive distributions (4-5% threat rates) and how class-weighted loss functions prevent majority-class collapse.
-- [ ] **Evaluation Metrics Selection:** Precision (minimizing false alarms) vs. Recall (catching every real threat) vs. F1-score (harmonic mean) on skewed distributions. Macro vs. Micro vs. Weighted F1.
-- [ ] **Memory-Constrained GPU Optimization:** How Mixed Precision Training (`fp16`), gradient accumulation, and small batch sizes allow transformer fine-tuning on limited VRAM (4GB).
-- [ ] **Weak Supervision & Lexicon Bootstrapping:** Programmatic dataset labeling using heuristic rules/lexicons and human-in-the-loop manual spot-checking to validate label quality.
+- [x] **DistilBERT Architecture & Transformer Trade-offs:** Knowledge distillation (60% smaller, 40% faster than BERT-base while retaining 97% language understanding). Attention mechanisms, tokenization subwords, truncation, and padding.
+- [x] **Handling Severe Class Imbalance:** Why standard Cross-Entropy Loss fails on rare positive distributions (4-5% threat rates) and how class-weighted loss functions prevent majority-class collapse.
+- [x] **Evaluation Metrics Selection:** Precision (minimizing false alarms) vs. Recall (catching every real threat) vs. F1-score (harmonic mean) on skewed distributions. Macro vs. Micro vs. Weighted F1.
+- [x] **Memory-Constrained GPU Optimization:** How Mixed Precision Training (`fp16`), gradient accumulation, and small batch sizes allow transformer fine-tuning on limited VRAM (4GB).
+- [x] **Weak Supervision & Lexicon Bootstrapping:** Programmatic dataset labeling using heuristic rules/lexicons and human-in-the-loop manual spot-checking to validate label quality.
 
 ### 3. MLOps, Model Governance & Lifecycle
 
-- [ ] **MLflow Tracking vs. MLflow Model Registry:** Tracking runs (hyperparameters, metrics, run artifacts) vs. Centralized Model Storage (versioning, lifecycle stages, metadata, dependencies).
-- [ ] **MLflow Model Aliases (`@production` vs `@challenger`):** Decoupling backend code from hardcoded storage paths. Dynamic loading via `models:/<name>@<alias>`.
-- [ ] **Silent AI Failures & Data Drift (Evidently AI):** How models fail silently when the real world changes (e.g., 2026 adversarial slang vs 2019 training data). Detecting covariate shift (input distribution changes) and target shift over time.
-- [ ] **Workflow Orchestration (Prefect):** Moving from monolithic Python scripts to Directed Acyclic Graphs (DAGs). The architectural difference between `@task` and `@flow`, managing state, automatic retries on failure, and decoupled execution.
-- [ ] **Evaluation Gating (The Arena Pattern):** Preventing regressions by enforcing automated programmatic thresholds before candidate artifacts can receive production routing tags.
+- [x] **MLflow Tracking vs. MLflow Model Registry:** Tracking runs (hyperparameters, metrics, run artifacts) vs. Centralized Model Storage (versioning, lifecycle stages, metadata, dependencies).
+- [x] **MLflow Model Aliases (`@production` vs `@challenger`):** Decoupling backend code from hardcoded storage paths. Dynamic loading via `models:/<name>@<alias>`.
+- [x] **Silent AI Failures & Data Drift (Evidently AI):** How models fail silently when the real world changes (e.g., 2026 adversarial slang vs 2019 training data). Detecting covariate shift (input distribution changes) and target shift over time.
+- [x] **Workflow Orchestration (Prefect):** Moving from monolithic Python scripts to Directed Acyclic Graphs (DAGs). The architectural difference between `@task` and `@flow`, managing state, automatic retries on failure, and decoupled execution.
+- [x] **Evaluation Gating (The Arena Pattern):** Preventing regressions by enforcing automated programmatic thresholds before candidate artifacts can receive production routing tags.
 
 ### 4. Systems Architecture & Security Design
 
-- [ ] **Defense-in-Depth AI Architecture:** Why raw transformer output should not drive critical business decisions alone; using deterministic guardrails (Risk Engine) alongside probabilistic neural networks.
-- [ ] **Fail-Safe Defaults:** Designing graceful fallbacks when components fail (e.g., fallback routing if language detection throws an unhandled exception).
-- [ ] **Docker Containerization & Networking:** Container isolation, port mapping (`5432:5432`, `8000:8000`), network bridges between containers, and volume persistence.
+- [x] **Defense-in-Depth AI Architecture:** Why raw transformer output should not drive critical business decisions alone; using deterministic guardrails (Risk Engine) alongside probabilistic neural networks.
+- [x] **Fail-Safe Defaults:** Designing graceful fallbacks when components fail (e.g., graceful fallback to local container artifacts if MLflow artifact streaming encounters timeouts/network drops).
+- [x] **Docker Containerization & Networking:** Container isolation, absolute path SQLite volume mapping (`sqlite:////mlflow/mlflow.db`), port mapping (`5432:5432`, `8000:8000`), network bridges, and volume persistence.
 
 ---
 
@@ -146,22 +147,22 @@ _(Libraries, frameworks, and tools used to build Sentinel)_
 
 ### 5. MLOps, Governance & Automation
 
-- **`mlflow`:** Experiment tracking, flavor logging (`mlflow.transformers`), Model Registry, and dynamic artifact fetching via aliases.
+- **`mlflow`:** Experiment tracking, flavor logging (`mlflow.transformers`), Model Registry, artifact proxying (`--serve-artifacts`), and dynamic version resolution.
 - **`evidently` (v0.6.x):** Statistical drift detection (`Report`, `DataDriftPreset`), computing divergence between reference and live data, and HTML dashboard generation.
 - **`prefect` (v3.x):** Self-healing automation DAGs (`@task`, `@flow`), task state tracking, automatic retries, and local orchestration servers.
 
 ### 6. Infrastructure, DevOps & Deployment
 
-- **Docker & Docker Compose:** `Dockerfile` creation (layer caching, non-root users), multi-service coordination, environment variable passing, network bridges, and volume mounts.
+- **Docker & Docker Compose:** `Dockerfile` creation (layer caching, non-root users), multi-service coordination, absolute-path volume mounting (`sentinel_mlflow_data`), network bridges, and Gunicorn timeout tuning (`--timeout 120`).
 - **Git & GitHub Actions:** Version control, `.gitignore` for large files, and CI/CD yaml pipelines.
 - **Cloud PaaS (Render / Railway):** Configuring environment secrets, provisioning hosted databases, and container deployment.
 
 ### 7. System Architecture Patterns
 
-| Pattern                    | How it is used in Sentinel                                                                              |
-| :------------------------- | :------------------------------------------------------------------------------------------------------ |
-| **Defense-in-Depth AI**    | Probabilistic neural nets (DistilBERT) + deterministic heuristics (Risk Engine).                        |
-| **The Arena / Eval Gate**  | A challenger model cannot replace the production champion unless it programmatically outperforms it.    |
-| **Separation of Concerns** | Decoupling routing, validation, config, persistence, business logic, and orchestration.                 |
-| **Fail-Safe Defaults**     | Graceful fallbacks so missing data causes safe behavior rather than server crashes.                     |
-| **Dynamic Model Aliasing** | Decoupling code from physical file paths; fetching `@production` allows hot-swaps without code changes. |
+| Pattern                    | How it is used in Sentinel                                                                                     |
+| :------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| **Defense-in-Depth AI**    | Probabilistic neural nets (DistilBERT) + deterministic heuristics (Risk Engine).                               |
+| **The Arena / Eval Gate**  | A challenger model cannot replace the production champion unless it programmatically outperforms it.           |
+| **Separation of Concerns** | Decoupling routing, validation, config, persistence, business logic, and orchestration.                        |
+| **Fail-Safe Defaults**     | Graceful fallback to local container artifacts if MLflow network requests drop or crash.                       |
+| **Dynamic Model Aliasing** | Decoupling code from physical file paths; resolving `@production` dynamically permits zero-downtime hot-swaps. |

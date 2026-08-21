@@ -1,37 +1,41 @@
-# ml/training/register_to_docker_mlflow.py
 import mlflow
 from mlflow.tracking import MlflowClient
-import os
+from transformers import pipeline
+import warnings
+warnings.filterwarnings("ignore")
 
-MLFLOW_URI = "http://localhost:5000"
-mlflow.set_tracking_uri(MLFLOW_URI)
-client = MlflowClient(tracking_uri=MLFLOW_URI)
+MLFLOW_TRACKING_URI = "http://localhost:5000"
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+client = MlflowClient()
 
-# Since they are mounted, we can reference them directly or log them cleanly
-models = [
-    {"name": "Sentinel-English-Model", "path": "english_distilbert"},
-    {"name": "Sentinel-Hinglish-Model", "path": "hinglish_distilbert"}
+models_to_register = [
+    {"name": "Sentinel-English-Model", "path": "backend/app/ml/artifacts/english_distilbert"},
+    {"name": "Sentinel-Hinglish-Model", "path": "backend/app/ml/artifacts/hinglish_distilbert"}
 ]
 
-print(f"🔗 Connecting to Docker MLflow at {MLFLOW_URI}...")
+print(f"🔗 Connecting to Docker MLflow at {MLFLOW_TRACKING_URI}...\n")
 
-for m in models:
-    print(f"\n📦 Registering {m['name']}...")
+for m in models_to_register:
+    print(f"📦 Registering {m['name']}...")
     
+    # Load the local model into memory as a HuggingFace Pipeline
+    pipe = pipeline("text-classification", model=m['path'], tokenizer=m['path'], device="cpu")
+    
+    # Log and register it using MLflow's official Transformers flavor
     with mlflow.start_run(run_name=f"docker-init-{m['name']}") as run:
-        # Log using a local artifact path URI
-        mlflow.log_artifacts(f"./artifacts/{m['path']}", artifact_path="model")
-        run_id = run.info.run_id
-
-    # Register model
-    mv = mlflow.register_model(f"runs:/{run_id}/model", m["name"])
+        mlflow.transformers.log_model(
+            transformers_model=pipe,
+            artifact_path="model",
+            registered_model_name=m['name'],
+            pip_requirements=["torch", "transformers"]  # <--- FIX: Bypass the TF bug
+        )
+        
+    # Find the latest version we just registered
+    latest_version = client.search_model_versions(f"name='{m['name']}'")[0].version
     
-    # Set alias
-    client.set_registered_model_alias(
-        name=m["name"],
-        alias="production",
-        version=mv.version
-    )
-    print(f"✅ Set alias @production for {m['name']} (version {mv.version})")
+    # Set the @production alias so main.py can find it!
+    client.set_registered_model_alias(m['name'], "production", latest_version)
+    
+    print(f"✅ Created version '{latest_version}' and tagged as @production\n")
 
-print("\n🚀 Done!")
+print("🚀 Done! MLflow is fully seeded.")
