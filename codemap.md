@@ -53,9 +53,24 @@ _Where it happens: `backend/app/main.py` and `backend/app/schemas.py`_
 
 - **Response Contract:** Formats the computed output into a strictly validated `RiskDecision` schema and returns HTTP 200 OK.
 
-### Stage 7: The Automated Evaluation Gate (The Arena)
+### Stage 7: Production Monitoring (Data Drift Detection)
 
-_Where it happens: `ml/training/eval_gate.py`_
+_Where it happens: `ml/training/drift_detector.py` and `simulate_traffic.py`_
+
+- **Direct Data Extraction:** Bypasses the API layer entirely, using a SQLAlchemy + `psycopg2` engine to stream production text logs directly from PostgreSQL into a Pandas DataFrame.
+- **Distribution Comparison:** Evidently AI computes statistical distance between the baseline training vocabulary (2019 data) and live traffic (modern evasive slang).
+- **Trigger:** If dataset drift thresholds are breached, it flags the system for automated retraining.
+
+### Stage 8: Automated Orchestration (The Self-Healing Loop)
+
+_Where it happens: `ml/training/retrain_pipeline.py`_
+
+- **Prefect DAGs:** Defines a Directed Acyclic Graph (`@flow`) breaking the recovery process into isolated, retryable `@task` blocks.
+- **Pipeline Execution:** 1) Extracts newly drifted data. 2) Triggers a GPU fine-tuning job to build a new Challenger model. 3) Hands the Challenger over to the Evaluation Gate.
+
+### Stage 9: The Automated Evaluation Gate (The Arena)
+
+_Where it happens: `ml/training/eval_gate.py` (Triggered by Stage 8)_
 
 - **Champion Loading:** Downloads the active `@production` artifact from MLflow.
 - **Challenger Ingestion:** Loads candidate retraining artifacts.
@@ -73,6 +88,7 @@ _Where it happens: `ml/training/eval_gate.py`_
 - [ ] **Pydantic V2 & Data Serialization:** Request parsing, type coercion, field constraints, schema validation, and how Pydantic protects endpoints from malformed payloads.
 - [ ] **Database Connection Pooling & ORM:** How SQLAlchemy engine pools connections (`pool_size`, `max_overflow`), how sessions manage transactions (`db.add()`, `db.commit()`), and why `get_db` uses a generator with `yield`.
 - [ ] **Environment Configuration Management:** Decoupling code from deployment environments using `pydantic-settings` (`BaseSettings`) and 12-Factor App design principles.
+- [ ] **Direct vs. Indirect Data Ingestion:** Why analytics and drift scripts use `psycopg2`/`pd.read_sql` for binary streams directly from PostgreSQL instead of making slow, memory-heavy HTTP GET requests to the FastAPI layer.
 
 ### 2. Machine Learning, NLP & Hardware
 
@@ -86,11 +102,66 @@ _Where it happens: `ml/training/eval_gate.py`_
 
 - [ ] **MLflow Tracking vs. MLflow Model Registry:** Tracking runs (hyperparameters, metrics, run artifacts) vs. Centralized Model Storage (versioning, lifecycle stages, metadata, dependencies).
 - [ ] **MLflow Model Aliases (`@production` vs `@challenger`):** Decoupling backend code from hardcoded storage paths. Dynamic loading via `models:/<name>@<alias>`.
+- [ ] **Silent AI Failures & Data Drift (Evidently AI):** How models fail silently when the real world changes (e.g., 2026 adversarial slang vs 2019 training data). Detecting covariate shift (input distribution changes) and target shift over time.
+- [ ] **Workflow Orchestration (Prefect):** Moving from monolithic Python scripts to Directed Acyclic Graphs (DAGs). The architectural difference between `@task` and `@flow`, managing state, automatic retries on failure, and decoupled execution.
 - [ ] **Evaluation Gating (The Arena Pattern):** Preventing regressions by enforcing automated programmatic thresholds before candidate artifacts can receive production routing tags.
-- [ ] **Concept Drift vs. Data Drift (Evidently AI):** Detecting input covariate shift (changes in vocabulary, length, distribution) and target shift (changes in prediction distribution) over time.
 
 ### 4. Systems Architecture & Security Design
 
 - [ ] **Defense-in-Depth AI Architecture:** Why raw transformer output should not drive critical business decisions alone; using deterministic guardrails (Risk Engine) alongside probabilistic neural networks.
 - [ ] **Fail-Safe Defaults:** Designing graceful fallbacks when components fail (e.g., fallback routing if language detection throws an unhandled exception).
 - [ ] **Docker Containerization & Networking:** Container isolation, port mapping (`5432:5432`, `8000:8000`), network bridges between containers, and volume persistence.
+
+---
+
+## Part 3: The MLOps Developer's Stack Guide
+
+_(Libraries, frameworks, and tools used to build Sentinel)_
+
+### 1. Languages & Core Runtime
+
+- **Python 3.11 / 3.12:** Type hints, generator functions (`yield`), context managers, virtual environments (`venv`), and package dependency resolution.
+- **CUDA & cuDNN (NVIDIA):** Managing GPU acceleration, device memory allocation (`.to("cuda")`), VRAM cache management, and OOM debugging.
+
+### 2. Machine Learning, NLP & Data Engineering
+
+- **`torch` (PyTorch):** Core tensor math, `CrossEntropyLoss` for class imbalance, and mixed-precision training (`fp16`).
+- **`transformers` & `datasets` (Hugging Face):** `distilbert` architectures, `AutoTokenizer`, `pipeline`, subword tokenization (WordPiece), truncation, dynamic padding, and attention masks.
+- **`scikit-learn`:** `TfidfVectorizer`, `LogisticRegression`, evaluation metrics (`f1_score`, `precision_score`, `recall_score`, `classification_report`), and class weight computation.
+- **`pandas` & `numpy`:** Tabular ETL, dataframe filtering, transformations, and reservoir sampling.
+- **`langdetect` & `re` (Regex):** Statistical n-gram language classification and heuristic guardrail rule matching.
+
+### 3. Backend, API & Data Validation
+
+- **`fastapi`:** Async REST APIs, `@asynccontextmanager` lifecycles, route definitions, and Dependency Injection (`Depends(get_db)`).
+- **`uvicorn`:** ASGI web server, reload flags, and worker processes.
+- **`pydantic` & `pydantic-settings`:** Strict data contracts (`BaseModel`), input validation, environment configuration (12-Factor App), and automatic JSON serialization.
+- **`requests` / `httpx`:** Client-side HTTP simulation and integration testing.
+
+### 4. Database & Persistence Layer
+
+- **PostgreSQL:** Relational database design, schemas, and primary keys.
+- **`SQLAlchemy`:** Python ORM, connection pools (`create_engine`), Base mapping (`DeclarativeBase`), and transaction sessions (`db.add`, `db.commit`).
+- **`psycopg2-binary`:** Low-level C-based PostgreSQL DB-API driver for high-speed dataframe streaming.
+
+### 5. MLOps, Governance & Automation
+
+- **`mlflow`:** Experiment tracking, flavor logging (`mlflow.transformers`), Model Registry, and dynamic artifact fetching via aliases.
+- **`evidently` (v0.6.x):** Statistical drift detection (`Report`, `DataDriftPreset`), computing divergence between reference and live data, and HTML dashboard generation.
+- **`prefect` (v3.x):** Self-healing automation DAGs (`@task`, `@flow`), task state tracking, automatic retries, and local orchestration servers.
+
+### 6. Infrastructure, DevOps & Deployment
+
+- **Docker & Docker Compose:** `Dockerfile` creation (layer caching, non-root users), multi-service coordination, environment variable passing, network bridges, and volume mounts.
+- **Git & GitHub Actions:** Version control, `.gitignore` for large files, and CI/CD yaml pipelines.
+- **Cloud PaaS (Render / Railway):** Configuring environment secrets, provisioning hosted databases, and container deployment.
+
+### 7. System Architecture Patterns
+
+| Pattern                    | How it is used in Sentinel                                                                              |
+| :------------------------- | :------------------------------------------------------------------------------------------------------ |
+| **Defense-in-Depth AI**    | Probabilistic neural nets (DistilBERT) + deterministic heuristics (Risk Engine).                        |
+| **The Arena / Eval Gate**  | A challenger model cannot replace the production champion unless it programmatically outperforms it.    |
+| **Separation of Concerns** | Decoupling routing, validation, config, persistence, business logic, and orchestration.                 |
+| **Fail-Safe Defaults**     | Graceful fallbacks so missing data causes safe behavior rather than server crashes.                     |
+| **Dynamic Model Aliasing** | Decoupling code from physical file paths; fetching `@production` allows hot-swaps without code changes. |

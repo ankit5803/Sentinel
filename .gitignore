@@ -22,6 +22,11 @@ ml/training/artifacts/
 *.joblib
 mlruns/
 mlartifacts/
+mlflow.db
+
+# Reports & Monitoring
+*_drift_report.html
+prefect.db
 
 # Node / frontend
 node_modules/

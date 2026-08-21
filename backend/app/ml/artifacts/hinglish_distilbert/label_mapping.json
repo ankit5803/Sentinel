@@ -1,0 +1,12 @@
+{
+  "label2id": {
+    "NON_VIOLENT_ABUSE": 0,
+    "POTENTIAL_THREAT": 1,
+    "SAFE": 2
+  },
+  "id2label": {
+    "0": "NON_VIOLENT_ABUSE",
+    "1": "POTENTIAL_THREAT",
+    "2": "SAFE"
+  }
+}

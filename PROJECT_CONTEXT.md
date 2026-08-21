@@ -217,7 +217,17 @@ Append a dated 2-3 line entry every session. New sessions: read this section fir
 
 [progress] — Spun up local MLflow Tracking Server. Wrote register_v1_models.py to log English and Hinglish DistilBERT models into the MLflow Model Registry as Version 1. Tagged both with the @production alias. Refactored FastAPI backend (config.py and main.py) to dynamically fetch and hot-load pipelines directly from the MLflow registry rather than hardcoded local paths. Verified inference works flawlessly.
 
+[progress] — Implemented Data Drift Detection using Evidently AI and psycopg2. Built a traffic simulator to inject normal and adversarial/slang threat payloads into the live FastAPI endpoint. The model failed silently on the modern slang (predicting SAFE), but the Evidently script successfully mathematically detected the data distribution shift between the 2019 training data and the live Postgres logs, triggering the automated drift alarm.
+
 [milestone] — DAYS 7-9 COMPLETE. Built eval_gate.py (The Arena) to automate model promotion. The script pits the MLflow @production champion against a newly trained challenger on a holdout test set, running on the GPU. It successfully blocks promotion unless the challenger achieves a strictly higher F1 score, ensuring safe, self-healing deployments.
+
+[milestone] — DAYS 10-13 COMPLETE. Built the Self-Healing Orchestration pipeline using Prefect (retrain_pipeline.py). Connected the Evidently drift detector to the Prefect DAG. Successfully executed an automated run that extracted live logs from PostgreSQL, trained a Challenger model, and sent it to the Eval Gate. The gate successfully rejected a tied model, proving the automated safety rails work in an end-to-end loop. The core MLOps architecture is now fully realized.
+
+[progress] — Unified the local infrastructure using Docker Compose (docker-compose.yml), successfully migrating from standalone terminals to a single networked stack (sentinel_backend, sentinel_postgres, sentinel_mlflow).
+
+[progress] — Debugged structural Docker issues: fixed volume mount pathing for ML models by ensuring absolute paths are used in main.py, stabilized MLflow Gunicorn crashes (SIGKILL/Worker Timeout) by extending timeouts, and added --reload to Uvicorn for live development.
+
+[status] — Currently at Day 14. Infrastructure is completely containerized and stable. Immediate next step: Execute the live end-to-end drift simulation (simulate_traffic.py → drift_detector.py → retrain_pipeline.py) against the running Docker stack to verify the full self-healing loop in a production-like environment.
 
 Open decisions / TBD
 Whether Prometheus/Grafana makes the final cut — decide by Day 12 based on schedule.
