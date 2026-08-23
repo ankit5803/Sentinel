@@ -53,25 +53,22 @@ async def lifespan(app: FastAPI):
             
     # 3. Cloud Environment (or MLflow failure fallback)
     if in_cloud or "english" not in models:
-        print("☁️ Cloud environment detected (or MLflow missing). Loading models...")
-        BASE_DIR = Path(__file__).resolve().parent
-        eng_dir = BASE_DIR / "ml" / "artifacts" / "english_distilbert"
-        hing_dir = BASE_DIR / "ml" / "artifacts" / "hinglish_distilbert"
-        
+        print("☁️ Cloud environment detected. Pulling custom fine-tuned weights from Hugging Face Repo...")
         try:
-            # Try loading local fine-tuned weights if they exist
-            if eng_dir.exists():
-                print("⬇️ Loading local fine-tuned weights from disk...")
-                models["english"] = pipeline("text-classification", model=str(eng_dir), tokenizer=str(eng_dir))
-                models["hinglish"] = pipeline("text-classification", model=str(hing_dir), tokenizer=str(hing_dir))
-            else:
-                # EMERGENCY CLOUD FALLBACK: Pull base models from HF so API doesn't crash!
-                print("⚠️ Fine-tuned weights not found. Pulling base models from Hugging Face Hub...")
-                models["english"] = pipeline("text-classification", model="distilbert-base-uncased")
-                models["hinglish"] = pipeline("text-classification", model="distilbert-base-multilingual-cased")
-            print("✅ Fallback models loaded successfully.")
+            # Pull your exact custom-trained model weights from your personal HF model repo
+            models["english"] = pipeline(
+                "text-classification", 
+                model="Ankit03/sentinel-model-weights", 
+                subfolder="english_distilbert"
+            )
+            models["hinglish"] = pipeline(
+                "text-classification", 
+                model="Ankit03/sentinel-model-weights", 
+                subfolder="hinglish_distilbert"
+            )
+            print("✅ Custom fine-tuned models loaded successfully from cloud repo!")
         except Exception as fallback_e:
-            print(f"❌ Critical Failure: {fallback_e}")
+            print(f"❌ Critical Failure loading custom weights: {fallback_e}")
             raise fallback_e
             
     yield
