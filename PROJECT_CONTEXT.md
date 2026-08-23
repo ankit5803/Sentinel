@@ -35,11 +35,8 @@ or gradient accumulation to fit comfortably. Not a blocker, just plan for it.
 User needs a REAL PUBLIC DEPLOYED LINK to put on their CV/resume — not just a
 local Docker setup. Must be FREE (no paid tiers). Plan:
 
-- **Render** or **Railway** free tier for the FastAPI backend + Postgres + Redis
-  (both platforms offer free Postgres/Redis add-ons or easy container deploys).
-- Decide between the two once we reach deployment — check current free-tier
-  limits at that time (they change), pick whichever has better free Postgres/
-  Redis support and simpler FastAPI deploy at that moment.
+- **Hugging Face Spaces** utilized for hosting the core FastAPI backend live (`https://ankit03-sentinel-api.hf.space`), running custom fine-tuned weights with automatic cloud-fallback loader logic.
+- **Render** free tier utilized for hosting the external persistent **PostgreSQL** database instance.
 - Frontend (Next.js dashboard) can go on Vercel free tier separately if easier
   than co-hosting with backend.
 - IMPORTANT: build with deployment in mind from the start, not bolted on at
@@ -69,10 +66,10 @@ local Docker setup. Must be FREE (no paid tiers). Plan:
 
 - **ML/NLP:** PyTorch, Hugging Face Transformers (DistilBERT), scikit-learn (TF-IDF+LogReg baseline)
 - **Backend:** FastAPI, Pydantic, SQLAlchemy
-- **Data:** PostgreSQL, Redis
+- **Data:** PostgreSQL (hosted live on Render), Redis
 - **MLOps:** MLflow (tracking + model registry), Evidently (drift detection), Prefect (retraining orchestration)
 - **Frontend:** Next.js + TypeScript (minimal — 4-5 key metrics, not a full app)
-- **Infra:** Docker, Docker Compose, GitHub Actions (CI/CD), Prometheus + Grafana (nice-to-have, cut first if behind)
+- **Infra:** Docker, Docker Compose, GitHub Actions (CI/CD), Prometheus + Grafana (nice-to-have, cut first if behind), Hugging Face Spaces (Backend hosting), Render (Postgres hosting)
 - **Redis clone:** Python, asyncio, raw sockets, custom RESP parser
 
 ## Architecture (target end state)
@@ -84,7 +81,7 @@ User message → API Gateway (FastAPI) → Pre-processing → Language Detection
   → (rules layer + context/semantic layer applied per-language before final model)
   → Risk Engine (probability × severity × immediacy × target specificity → risk level)
   → Decision (SAFE / REVIEW / HIGH RISK)
-  → Logging + Postgres
+  → Logging + Postgres (Render cloud instance)
   → Drift Detection (Evidently, watching incoming data + prediction distributions, per language)
   → [if drift threshold crossed] Retraining Pipeline (Prefect, per-language retrain)
   → Model Evaluation Gate (must beat current production model, per language)
@@ -101,6 +98,7 @@ JSON
   "reason": "Explicit intent + targeted threat language"
 }
 Classification categories: SAFE / NON-VIOLENT ABUSE / POTENTIAL THREAT / VIOLENT THREAT
+
 Day-by-day plan (Sentinel, days 1-19 — full month, Redis clone postponed)
 Days 1-3: Data collection/prep, TF-IDF+LogReg baseline, DistilBERT fine-tune. Lock real metrics (precision/recall/F1/latency) before touching infra.
 
@@ -112,7 +110,7 @@ Days 10-13: Evidently drift detection + Prefect retraining trigger. Protect this
 
 Day 14 (COMPLETED): End-to-end test: simulate drift live, confirm auto-retrain-and-promote loop actually works. Stabilized containerized infrastructure and solved MLflow remote artifact proxying/timeouts.
 
-Day 15 (IN PROGRESS): GitHub Actions CI/CD workflow & Cloud Deployment preparation (Render/Railway).
+Day 15 (COMPLETED / CLOUD DEPLOYED): Successfully achieved live public deployment of the core backend on Hugging Face Spaces (https://ankit03-sentinel-api.hf.space) backed by a persistent PostgreSQL instance hosted on Render. GitHub Actions CI/CD preparation ongoing.
 
 Days 16-17: Dashboard (Next.js) + Prometheus/Grafana.
 
@@ -122,4 +120,6 @@ Progress Log
 [progress] — Days 1-13 complete (Data pipelines, Baselines, DistilBERT fine-tuning, FastAPI backend, PostgreSQL vault, MLflow Model Registry, Evidently drift detection, Prefect self-healing orchestration).
 
 [progress] — Day 14 complete: Executed end-to-end local test. Resolved complex Docker network persistence issues by updating MLflow SQLite URIs to absolute paths (sqlite:////mlflow/mlflow.db) and enabling --serve-artifacts with extended Gunicorn timeouts (--timeout 120). Bypassed MLflow Python registry resolution bugs by implementing dynamic MlflowClient version lookup by alias in FastAPI's startup lifespan. Verified full traffic simulation → drift detection → automated retraining loop.
+
+[progress] — Day 15 milestone reached: Hosted the production-ready Sentinel FastAPI backend live on Hugging Face Spaces (https://ankit03-sentinel-api.hf.space/health), paired with a persistent PostgreSQL database hosted on Render. Configured root run.py routing, resolved package import dependencies (huggingface_hub and gradio), and enabled automatic cloud weight loading for custom English and Hinglish DistilBERT models.
 ```
