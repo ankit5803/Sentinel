@@ -31,46 +31,49 @@ async def lifespan(app: FastAPI):
     """
     print("⏳ Booting Sentinel API...")
     
-    # Force the environment variable so MLflow absolutely cannot ignore it
-    os.environ["MLFLOW_TRACKING_URI"] = settings.MLFLOW_TRACKING_URI
-    mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+    # 1. Detect if we are running in the Hugging Face Cloud
+    in_cloud = os.environ.get("SPACE_ID") is not None
     
-    try:
-        print(f"Connecting to MLflow at {settings.MLFLOW_TRACKING_URI}...")
-        client = MlflowClient()
-
-        # 1. Manually resolve the alias to a hard version number to bypass the MLflow bug
-        eng_model_info = client.get_model_version_by_alias("Sentinel-English-Model", "production")
-        eng_version = eng_model_info.version
-        print(f"✅ Found English Model @production (Version {eng_version})")
-        
-        hing_model_info = client.get_model_version_by_alias("Sentinel-Hinglish-Model", "production")
-        hing_version = hing_model_info.version
-        print(f"✅ Found Hinglish Model @production (Version {hing_version})")
-
-        # 2. Download the models using the hard version number
-        print(f"⬇️ Downloading weights from MLflow Server...")
-        models["english"] = mlflow.transformers.load_model(f"models:/Sentinel-English-Model/{eng_version}")
-        models["hinglish"] = mlflow.transformers.load_model(f"models:/Sentinel-Hinglish-Model/{hing_version}")
-
-        print("✅ All ML models hot-loaded successfully from MLflow!")
-        
-    except Exception as e:
-        print(f"⚠️ MLflow connection or model fetch failed: {e}")
-        print("🔄 Falling back to local container artifacts...")
-        
-        BASE_DIR = Path(__file__).resolve().parent 
+    # 2. Local Environment: Try MLflow
+    if not in_cloud:
+        os.environ["MLFLOW_TRACKING_URI"] = settings.MLFLOW_TRACKING_URI
+        mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
+        try:
+            print(f"Connecting to MLflow at {settings.MLFLOW_TRACKING_URI}...")
+            client = MlflowClient()
+            eng_version = client.get_model_version_by_alias("Sentinel-English-Model", "production").version
+            hing_version = client.get_model_version_by_alias("Sentinel-Hinglish-Model", "production").version
+            
+            print(f"⬇️ Downloading weights from MLflow Server...")
+            models["english"] = mlflow.transformers.load_model(f"models:/Sentinel-English-Model/{eng_version}")
+            models["hinglish"] = mlflow.transformers.load_model(f"models:/Sentinel-Hinglish-Model/{hing_version}")
+            print("✅ All ML models hot-loaded successfully from MLflow!")
+        except Exception as e:
+            print(f"⚠️ MLflow connection failed: {e}")
+            
+    # 3. Cloud Environment (or MLflow failure fallback)
+    if in_cloud or "english" not in models:
+        print("☁️ Cloud environment detected (or MLflow missing). Loading models...")
+        BASE_DIR = Path(__file__).resolve().parent
         eng_dir = BASE_DIR / "ml" / "artifacts" / "english_distilbert"
         hing_dir = BASE_DIR / "ml" / "artifacts" / "hinglish_distilbert"
         
         try:
-            models["english"] = pipeline("text-classification", model=str(eng_dir), tokenizer=str(eng_dir))
-            models["hinglish"] = pipeline("text-classification", model=str(hing_dir), tokenizer=str(hing_dir))
-            print("✅ Local fallback successful. Models loaded from disk.")
+            # Try loading local fine-tuned weights if they exist
+            if eng_dir.exists():
+                print("⬇️ Loading local fine-tuned weights from disk...")
+                models["english"] = pipeline("text-classification", model=str(eng_dir), tokenizer=str(eng_dir))
+                models["hinglish"] = pipeline("text-classification", model=str(hing_dir), tokenizer=str(hing_dir))
+            else:
+                # EMERGENCY CLOUD FALLBACK: Pull base models from HF so API doesn't crash!
+                print("⚠️ Fine-tuned weights not found. Pulling base models from Hugging Face Hub...")
+                models["english"] = pipeline("text-classification", model="distilbert-base-uncased")
+                models["hinglish"] = pipeline("text-classification", model="distilbert-base-multilingual-cased")
+            print("✅ Fallback models loaded successfully.")
         except Exception as fallback_e:
-            print(f"❌ Critical Failure. Both MLflow and local fallback failed: {fallback_e}")
+            print(f"❌ Critical Failure: {fallback_e}")
             raise fallback_e
-    
+            
     yield
     
     print("🛑 Shutting down Sentinel API. Clearing memory.")
