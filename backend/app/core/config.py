@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Sentinel API"
     
     # The Postgres Database URL (Defaulting to our local Docker setup)
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/sentinel")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://sentinel_db_q7xv_user:rlfZMtXXlpFGghyqga4xaIPGXeRHw42X@dpg-da5eoerbc2fs738qeu3g-a.singapore-postgres.render.com/sentinel_db_q7xv")
     
     # MLflow Tracking Server Location
     MLFLOW_TRACKING_URI: str = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
