@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import langdetect
 import mlflow
 from mlflow.tracking import MlflowClient
-from transformers import pipeline
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 
 from app.core.config import get_settings
 from app.schemas import AnalyzeRequest, RiskDecision
@@ -53,20 +53,19 @@ async def lifespan(app: FastAPI):
             
     # 3. Cloud Environment (or MLflow failure fallback)
     if in_cloud or "english" not in models:
-        print("☁️ Cloud environment detected. Pulling custom fine-tuned weights from Hugging Face Repo...")
+        print("☁️ Cloud environment detected. Explicitly loading custom models from HF repo...")
         try:
-            # Pull your exact custom-trained model weights from your personal HF model repo
-            models["english"] = pipeline(
-                "text-classification", 
-                model="Ankit03/sentinel-model-weights", 
-                subfolder="english_distilbert"
-            )
-            models["hinglish"] = pipeline(
-                "text-classification", 
-                model="Ankit03/sentinel-model-weights", 
-                subfolder="hinglish_distilbert"
-            )
-            print("✅ Custom fine-tuned models loaded successfully from cloud repo!")
+            # Explicitly load English custom model and tokenizer from subfolder
+            eng_tokenizer = AutoTokenizer.from_pretrained("Ankit03/sentinel-model-weights", subfolder="english_distilbert")
+            eng_model = AutoModelForSequenceClassification.from_pretrained("Ankit03/sentinel-model-weights", subfolder="english_distilbert")
+            models["english"] = pipeline("text-classification", model=eng_model, tokenizer=eng_tokenizer)
+            
+            # Explicitly load Hinglish custom model and tokenizer from subfolder
+            hing_tokenizer = AutoTokenizer.from_pretrained("Ankit03/sentinel-model-weights", subfolder="hinglish_distilbert")
+            hing_model = AutoModelForSequenceClassification.from_pretrained("Ankit03/sentinel-model-weights", subfolder="hinglish_distilbert")
+            models["hinglish"] = pipeline("text-classification", model=hing_model, tokenizer=hing_tokenizer)
+            
+            print("✅ Custom fine-tuned models loaded successfully via explicit AutoClasses!")
         except Exception as fallback_e:
             print(f"❌ Critical Failure loading custom weights: {fallback_e}")
             raise fallback_e
