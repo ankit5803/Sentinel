@@ -21,8 +21,8 @@ with demo:
     gr.Markdown("The Sentinel Risk Engine is currently active.")
     gr.Markdown("Access the interactive documentation at: **`/docs`**")
 
-# 3. Mount the API
-app = gr.mount_gradio_app(fastapi_app, demo, path="/")
+# 3. Mount the API cleanly: FastAPI stays at root (/), Gradio is moved to /ui
+app = gr.mount_gradio_app(fastapi_app, demo, path="/ui")
 
 # 4. Keep the server awake and listening!
 if __name__ == "__main__":
