@@ -1,5 +1,6 @@
 import re
 import os
+import torch
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 import langdetect
 import mlflow
 from mlflow.tracking import MlflowClient
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from app.core.config import get_settings
 from app.schemas import AnalyzeRequest, RiskDecision
@@ -20,59 +21,49 @@ try:
     import spaces
     gpu_decorator = spaces.GPU
 except ImportError:
-    # Graceful fallback for local development where 'spaces' isn't installed
+    # Graceful fallback for local development
     def gpu_decorator(func):
         return func
 
 settings = get_settings()
-
-# Ensure our database tables are created
 Base.metadata.create_all(bind=engine)
 
-# Global dictionary to hold our hot-loaded models
+# Global dictionary to hold models & tokenizers directly (bypassing pipelines)
 models = {}
 risk_engine = SentinelRiskEngine()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Executes once when the server starts. Loads the heavy ML models into memory.
-    """
     print("⏳ Booting Sentinel API...")
-    
-    # 1. Detect if we are running in the Hugging Face Cloud
     in_cloud = os.environ.get("SPACE_ID") is not None
     
-    # 2. Local Environment: Try MLflow
     if not in_cloud:
         os.environ["MLFLOW_TRACKING_URI"] = settings.MLFLOW_TRACKING_URI
         mlflow.set_tracking_uri(settings.MLFLOW_TRACKING_URI)
         try:
-            print(f"Connecting to MLflow at {settings.MLFLOW_TRACKING_URI}...")
             client = MlflowClient()
             eng_version = client.get_model_version_by_alias("Sentinel-English-Model", "production").version
             hing_version = client.get_model_version_by_alias("Sentinel-Hinglish-Model", "production").version
             
-            print(f"⬇️ Downloading weights from MLflow Server...")
-            models["english"] = mlflow.transformers.load_model(f"models:/Sentinel-English-Model/{eng_version}")
-            models["hinglish"] = mlflow.transformers.load_model(f"models:/Sentinel-Hinglish-Model/{hing_version}")
+            eng_pipe = mlflow.transformers.load_model(f"models:/Sentinel-English-Model/{eng_version}")
+            hing_pipe = mlflow.transformers.load_model(f"models:/Sentinel-Hinglish-Model/{hing_version}")
+            
+            models["english"] = {"model": eng_pipe.model, "tokenizer": eng_pipe.tokenizer}
+            models["hinglish"] = {"model": hing_pipe.model, "tokenizer": hing_pipe.tokenizer}
             print("✅ All ML models hot-loaded successfully from MLflow!")
         except Exception as e:
             print(f"⚠️ MLflow connection failed: {e}")
             
-    # 3. Cloud Environment (or MLflow failure fallback)
     if in_cloud or "english" not in models:
         print("☁️ Cloud environment detected. Explicitly loading custom models from HF repo...")
         try:
-            # Explicitly load English custom model and tokenizer from subfolder
             eng_tokenizer = AutoTokenizer.from_pretrained("Ankit03/sentinel-model-weights", subfolder="english_distilbert")
             eng_model = AutoModelForSequenceClassification.from_pretrained("Ankit03/sentinel-model-weights", subfolder="english_distilbert")
-            models["english"] = pipeline("text-classification", model=eng_model, tokenizer=eng_tokenizer)
+            models["english"] = {"model": eng_model, "tokenizer": eng_tokenizer}
             
-            # Explicitly load Hinglish custom model and tokenizer from subfolder
             hing_tokenizer = AutoTokenizer.from_pretrained("Ankit03/sentinel-model-weights", subfolder="hinglish_distilbert")
             hing_model = AutoModelForSequenceClassification.from_pretrained("Ankit03/sentinel-model-weights", subfolder="hinglish_distilbert")
-            models["hinglish"] = pipeline("text-classification", model=hing_model, tokenizer=hing_tokenizer)
+            models["hinglish"] = {"model": hing_model, "tokenizer": hing_tokenizer}
             
             print("✅ Custom fine-tuned models loaded successfully via explicit AutoClasses!")
         except Exception as fallback_e:
@@ -80,11 +71,9 @@ async def lifespan(app: FastAPI):
             raise fallback_e
             
     yield
-    
     print("🛑 Shutting down Sentinel API. Clearing memory.")
     models.clear()
 
-# Initialize the FastAPI app
 app = FastAPI(
     title="Sentinel Risk API",
     description="Real-Time AI Threat Detection Platform",
@@ -92,26 +81,42 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Helper function to run model inference within the ZeroGPU context
 @gpu_decorator
 def run_inference(lang_label: str, text: str):
     """
-    Executes model inference under ZeroGPU hardware context.
-    We pass the string label instead of the pipeline object to avoid ZeroGPU type errors.
+    Native PyTorch inference for ZeroGPU context.
+    This strips away HF pipeline wrappers to avoid internal JSON serialization bugs.
     """
-    pipeline_model = models[lang_label]
-    return pipeline_model(text, truncation=True, max_length=128)[0]
+    model = models[lang_label]["model"]
+    tokenizer = models[lang_label]["tokenizer"]
+    
+    # Dynamically acquire the ZeroGPU hardware context
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    
+    # Tokenize and push to GPU
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=128)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    
+    # Execute inference securely
+    with torch.no_grad():
+        outputs = model(**inputs)
+        
+    probs = torch.nn.functional.softmax(outputs.logits, dim=-1)[0]
+    predicted_id = outputs.logits.argmax(dim=-1).item()
+    
+    # EXPLICITLY cast to native python types so ZeroGPU's serializer doesn't crash
+    score = float(probs[predicted_id].item())
+    label = str(model.config.id2label[predicted_id])
+    
+    return {"label": label, "score": score}
 
 @app.get("/health", summary="Health Check Endpoint")
 def health_check():
-    """
-    Simple health check endpoint to verify that the API is running.
-    """
     return {"status": "ok", "message": "API is running."}
 
 @app.post("/api/v1/analyze", response_model=RiskDecision)
 def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
-    # 1. Language Detection & Routing
     text_lower = request.text.lower()
     words = set(re.findall(r'\b\w+\b', text_lower))
     
@@ -130,24 +135,21 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
         else:
             detected_lang_label = "english"
 
-    # 2. ML Inference (Wrapped for ZeroGPU)
     try:
-        # Pass the string label (e.g., "english" or "hinglish") instead of the pipeline object
+        # Run inference natively
         prediction = run_inference(detected_lang_label, request.text)
         
-        if prediction['label'] == 'SAFE':
+        # Check label confidently regardless of model format (SAFE vs LABEL_0)
+        if prediction['label'].upper() in ['SAFE', 'LABEL_0']:
             threat_prob = 1.0 - prediction['score']
         else:
             threat_prob = prediction['score']
             
     except Exception as e:
-        # Using repr(e) gives us much better error details if anything else fails
         raise HTTPException(status_code=500, detail=f"Model inference failed: {repr(e)}")
 
-    # 3. Apply Contextual Risk Engine
     risk_decision = risk_engine.calculate_risk(request.text, threat_prob)
 
-    # 4. Log to Database
     log_entry = PredictionLog(
         text=request.text,
         language_detected=detected_lang_label,
