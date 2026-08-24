@@ -15,6 +15,15 @@ from app.ml.risk_engine import SentinelRiskEngine
 from app.db.database import get_db, engine, Base
 from app.models.models import PredictionLog
 
+# Safely import Hugging Face spaces for ZeroGPU support
+try:
+    import spaces
+    gpu_decorator = spaces.GPU
+except ImportError:
+    # Graceful fallback for local development where 'spaces' isn't installed
+    def gpu_decorator(func):
+        return func
+
 settings = get_settings()
 
 # Ensure our database tables are created
@@ -83,6 +92,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Helper function to run model inference within the ZeroGPU context
+@gpu_decorator
+def run_inference(pipeline_model, text: str):
+    """
+    Executes model inference under ZeroGPU hardware context.
+    """
+    return pipeline_model(text, truncation=True, max_length=128)[0]
+
 @app.get("/health", summary="Health Check Endpoint")
 def health_check():
     """
@@ -115,9 +132,9 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
             selected_pipeline = models["english"]
             detected_lang_label = "english"
 
-    # 2. ML Inference
+    # 2. ML Inference (Wrapped for ZeroGPU)
     try:
-        prediction = selected_pipeline(request.text, truncation=True, max_length=128)[0]
+        prediction = run_inference(selected_pipeline, request.text)
         
         if prediction['label'] == 'SAFE':
             threat_prob = 1.0 - prediction['score']
