@@ -1,92 +1,153 @@
----
-title: Sentinel API
-emoji: 🛡️
-colorFrom: blue
-colorTo: red
-sdk: gradio
-sdk_version: "4.44.1"
-app_file: run.py
-pinned: false
----
+Markdown
 
 <div align="center">
 
 # 🛡️ Sentinel
 
-### Real-Time AI Threat Detection & Self-Healing MLOps Platform
+**Production Real-Time AI Threat Detection & Self-Healing MLOps Platform**
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-005571?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![MLflow](https://img.shields.io/badge/MLflow-Registry-0194E2?style=flat-square&logo=mlflow&logoColor=white)](https://mlflow.org/)
-[![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Prefect](https://img.shields.io/badge/Prefect-Orchestration-000000?style=flat-square&logo=prefect&logoColor=white)](https://www.prefect.io/)
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-FFD21E?style=flat-square)](https://huggingface.co/)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel&logoColor=white)](https://vercel.com)
+[![Hugging Face Spaces](https://img.shields.io/badge/Backend-HF%20Spaces-FFD21E?logo=huggingface&logoColor=black)](https://ankit03-sentinel-api.hf.space)
+[![Render](https://img.shields.io/badge/Database-Render%20Postgres-46E3B7?logo=render&logoColor=black)](https://render.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![MLflow](https://img.shields.io/badge/MLflow-0194E2?logo=mlflow&logoColor=white)](https://mlflow.org/)
+[![Prefect](https://img.shields.io/badge/Prefect-024DFD?logo=prefect&logoColor=white)](https://www.prefect.io/)
+[![Groq](https://img.shields.io/badge/LLM%20Teacher-Groq%20Llama%203.3-F55036)](https://groq.com)
 
-_An enterprise-grade, distributed MLOps system featuring automated data drift monitoring, evaluation-gated retraining loops, and context-aware natural language threat analysis._
-
-[Live Cloud API](#-live-cloud-deployment) • [Key Features](#-core-architecture--components) • [Tech Stack](#️-technology-stack) • [Quick Start](#-quick-start)
-
----
+[🌐 Live Dashboard (Vercel)](#) • [⚡ Live API Endpoint (HF Space)](https://ankit03-sentinel-api.hf.space) • [📦 Model Hub Weights](https://huggingface.co/Ankit03/sentinel-model-weights)
 
 </div>
 
-## 🎯 Overview
+---
 
-**Sentinel** moves beyond standard academic Machine Learning notebooks by implementing a complete, closed-loop production lifecycle. It is designed to intercept and analyze text streams for high-risk threat language using dual-language neural classifiers (English and Romanized Hinglish).
+## 📖 Overview
 
-It doesn't just predict; it **self-heals**. Sentinel routes predictions through deterministic risk guardrails, logs audit telemetry to a persistent remote vault, and autonomously detects data drift to retrain, benchmark, and promote models without human intervention.
+**Sentinel** is an enterprise-grade AI moderation and threat defense system built to detect targeted violent threats, abusive language, and severe toxicity across both **English** and **Hinglish** (code-switched Hindi-English) text streams in real time.
 
-### ✨ Recent Engineering Milestones
-
-- **Multi-Cloud Distributed Architecture:** Successfully decoupled compute from storage, deploying the heavy inference FastAPI layer on **Hugging Face Spaces (16GB RAM)** while securely routing telemetry to a persistent **Render PostgreSQL Vault**.
-- **Inference Optimization:** Shaved ~10GB of bloat from the production Docker container (11.3GB ➔ 1.45GB) by strategically overriding default PyTorch CUDA binaries with CPU-only wheels and eliminating pip cache layers, achieving a lightweight edge-ready image.
-- **Continuous Integration:** Implemented GitHub Actions CI/CD pipelines to automatically build, test, and verify Docker containers and database connections on every push.
+Unlike static classification endpoints, Sentinel is engineered as an **autonomous, self-healing MLOps system**. It continuously monitors live inference traffic for covariate data drift, programmatically generates weak supervision labels using an **LLM Teacher (Groq Llama 3.3-70B)**, fine-tunes candidate models, validates them against production in an automated **Evaluation Arena (MLflow)**, and syncs winning model weights directly to the cloud without manual intervention.
 
 ---
 
-## 🏛️ Core Architecture & Components
+## ☁️ Distributed Cloud Deployment Architecture
 
-```text
-Incoming Text Stream
- ├── 1. FastAPI Gateway (Pydantic Schema Validation)
- ├── 2. Heuristic Language Router [English vs. Romanized Hinglish]
- ├── 3. DistilBERT Classifier (Hot-loaded via MLflow @production Registry)
- ├── 4. Contextual Risk Engine (Probability × Target × Immediacy)
- └── 5. PostgreSQL Audit Vault (Remote Cloud Logging)
-1. Defense-in-Design InferenceDual-Language Specialization: Decouples English and Romanized Hindi (Hinglish) into independent pipelines (distilbert-base-uncased and distilbert-base-multilingual-cased) trained with class-weighted cross-entropy loss to handle severe real-world data imbalance (~4% positive rates).Contextual Risk Engine: Intercepts raw neural probabilities, applying regular-expression and keyword-based heuristics to evaluate target specificity and temporal immediacy, returning structured decisions (SAFE, REVIEW, HIGH RISK).2. Autonomous MLOps LoopObservability & Drift: Evidently AI streams production audit logs directly from PostgreSQL, performing statistical distribution comparisons against historical training baselines.Orchestration & Retraining: Prefect manages Directed Acyclic Graphs (DAGs) that orchestrate background retraining jobs using a local GPU when drift triggers occur.The Evaluation Gate ("The Arena"): Prevents silent production regressions by executing strict holdout test-set benchmarking. A candidate model is prohibited from receiving the @production registry tag unless it programmatically outperforms the active champion.🛠️ Technology StackLayerTechnologiesML & NLPPyTorch, Hugging Face Transformers (DistilBERT), scikit-learnBackend & APIFastAPI, Pydantic, SQLAlchemy ORM, Uvicorn, Gradio SDK (Mount)Data & StoragePostgreSQL (Render)MLOps & CI/CDMLflow, Evidently AI, Prefect, GitHub ActionsInfrastructureDocker, Docker Compose, Hugging Face Spaces☁️ Live Cloud DeploymentThe API is actively hosted in the cloud using a custom FastAPI mount injected into a Hugging Face Space.Live Swagger UI: View Documentation & Test LiveExample Cloud API RequestBashcurl -X 'POST' \
-  '[https://ankit03-sentinel-api.hf.space/api/v1/analyze](https://ankit03-sentinel-api.hf.space/api/v1/analyze)' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "text": "I am going to find you tonight and make sure you disappear."
-}'
-Structured JSON Response:JSON{
-  "threat_probability": 0.94,
-  "risk_level": "HIGH",
+Sentinel is architected as a distributed, decoupled cloud-native ecosystem across specialized infrastructure providers:
+
+| Component                | Platform                | Role & Architecture Details                                                                                                                                     |
+| :----------------------- | :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend Dashboard**   | **Vercel**              | Next.js + TypeScript analytics UI displaying live threat distributions, classification latencies, and risk monitoring.                                          |
+| **Backend API**          | **Hugging Face Spaces** | High-performance **FastAPI** service mounted seamlessly onto **Gradio** (`https://ankit03-sentinel-api.hf.space`) with automatic cloud fallback weight loaders. |
+| **Database Vault**       | **Render**              | Managed persistent **PostgreSQL** instance capturing real-time prediction logs, inference scores, and input metadata for drift tracking.                        |
+| **Model Registry & Hub** | **Hugging Face Hub**    | Remote artifact repository hosting fine-tuned transformer checkpoints (`Ankit03/sentinel-model-weights`) synced automatically by the MLOps pipeline.            |
+| **LLM Teacher Layer**    | **Groq Cloud**          | High-throughput **Llama-3.3-70B-Versatile** inference engine executing zero-shot weak supervision and programmatic data labeling during retraining cycles.      |
+
+---
+
+## 🏗️ System Workflow & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph Online_Inference ["⚡ Online Inference Plane"]
+        Client["🖥️ Client / Vercel Dashboard"] -->|POST /api/v1/analyze| API["🚀 FastAPI (HF Spaces + Gradio)"]
+        API --> Router{"🔀 Language Router"}
+        Router -->|English| DistilBERT_EN["🧠 English DistilBERT"]
+        Router -->|Hinglish| DistilBERT_HI["🧠 Hinglish DistilBERT"]
+        DistilBERT_EN --> RiskEngine["🛡️ Contextual Risk Engine\n(Probability × Immediacy × Target)"]
+        DistilBERT_HI --> RiskEngine
+        RiskEngine --> DB[("🗄️ PostgreSQL (Render)\nPrediction Logs")]
+        RiskEngine -->|JSON Decision| Client
+    end
+
+    subgraph Offline_MLOps ["🔄 Autonomous Self-Healing Plane (Prefect + MLflow)"]
+        DB -.->|Stream Logs via psycopg2| Drift["📈 Evidently AI\nDrift Detection"]
+        Drift -->|Covariate Shift Detected| Prefect["⚙️ Prefect Orchestrator"]
+
+        Prefect --> Task1["1️⃣ Ingest Unlabelled Mixed Logs"]
+        Task1 --> Task2["2️⃣ Groq Llama-3.3 Weak Supervision\n(Auto-Labeling Teacher)"]
+        Task2 --> Task3["3️⃣ Train Challenger Transformer"]
+        Task3 --> Task4{"4️⃣ MLflow Evaluation Arena\nF1_Challenger >= F1_Champion?"}
+
+        Task4 -->|Passed| Promote["🏆 Promote to @production\n& Sync to Hugging Face Hub"]
+        Task4 -->|Failed| Reject["🛡️ Reject Challenger\n(Production Unchanged)"]
+        Promote -->|Auto-Push Weights| HFHub[("📦 Ankit03/sentinel-model-weights")]
+        HFHub -.->|Zero-Downtime Reload| API
+    end
+✨ Key Features & Technical Highlights
+Multi-Language Transformer Pipeline: Fine-tuned DistilBERT architectures trained with class-weighted loss functions to resolve severe threat class imbalance (top ~4% positive distribution).
+
+Defense-in-Depth Risk Engine: Combines probabilistic neural predictions with deterministic heuristic guardrails, evaluating temporal immediacy and entity targeting before categorizing inputs into SAFE, REVIEW, or HIGH RISK.
+
+Gradio-Mounted FastAPI Core: Backend operates as a standard production ASGI FastAPI service mounted cleanly on Gradio for native Hugging Face Spaces compatibility.
+
+Automated LLM Weak Supervision: Live user logs with detected vocabulary drift are auto-labeled via Groq's ultra-low-latency Llama-3.3-70B API, eliminating human labeling bottlenecks.
+
+The Arena Evaluation Gate: Challenger models must strictly surpass the active MLflow @production Champion on a holdout benchmark F1-score to earn deployment.
+
+Dynamic Cloud Versioning: Gated retrain victories automatically push binary artifacts into language-specific folders (/english_distilbert and /hinglish_distilbert) on the Hugging Face Model Hub.
+
+🔌 API Reference
+Analyze Text Risk
+POST /api/v1/analyze
+
+Request Payload:
+
+JSON
+{
+  "text": "I will find where you live and destroy everything you own."
+}
+Response Payload:
+
+JSON
+{
+  "text": "I will find where you live and destroy everything you own.",
+  "language_detected": "english",
+  "threat_probability": 0.9821,
+  "risk_level": "HIGH_RISK",
   "immediacy": "HIGH",
   "target_identified": true,
-  "confidence": 0.91,
-  "reason": "Explicit intent + targeted threat language"
+  "reason": "High probability model classification escalated by explicit target and immediacy cues."
 }
-🚀 Local Quick StartEnsure you have Docker Desktop and Python 3.11+ installed locally.1. Clone the RepositoryBashgit clone [https://github.com/your-username/Sentinel.git](https://github.com/your-username/Sentinel.git)
-cd Sentinel
-2. Spin Up Infrastructure (Docker Compose)Boots a local PostgreSQL database, MLflow server, and the FastAPI backend simultaneously:Bashdocker compose up -d --build
-3. Seed the MLflow Model RegistryPacks and registers the pre-trained production artifact weights into the Dockerized registry:Bashpython ml/training/register_to_docker_mlflow.py
-4. Run Drift Simulation & Self-Healing PipelineBash# Simulate adversarial text drift and write logs to PostgreSQL
-python ml/training/simulate_traffic.py
+🛠️ Tech Stack Matrix
+Machine Learning / NLP: PyTorch, Hugging Face Transformers (DistilBERT), Scikit-Learn, LangDetect
 
-# Detect distribution shift via Evidently AI
-python ml/training/drift_detector.py
+Backend & Serving: FastAPI, Pydantic V2, Uvicorn, Gradio
 
-# Trigger the Prefect automated retrain and evaluation loop
+Databases & Storage: PostgreSQL (Render), SQLAlchemy ORM, psycopg2
+
+MLOps & Orchestration: MLflow (Tracking & Registry), Prefect (v3.x DAGs), Evidently AI, Hugging Face Hub API (HfApi)
+
+Teacher LLM: Groq SDK (llama-3.3-70b-versatile)
+
+Frontend & Cloud Platforms: Next.js (Vercel), Hugging Face Spaces, Render
+
+💻 Local Development & Setup
+1. Clone & Setup Environment
+Bash
+git clone [https://github.com/Ankit03/sentinel.git](https://github.com/Ankit03/sentinel.git)
+cd sentinel
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+2. Configure Environment Variables
+Create a .env file in the root directory:
+
+Code snippet
+DATABASE_URL=postgresql://user:password@hostname:5432/sentinel
+MLFLOW_TRACKING_URI=[http://127.0.0.1:5000](http://127.0.0.1:5000)
+GROQ_API_KEY=gsk_your_groq_api_key
+HF_TOKEN=hf_your_huggingface_access_token
+3. Launch Local Backend & MLflow
+Bash
+# Terminal 1: Start MLflow Tracking Server
+mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlflow-artifacts --host 127.0.0.1 --port 5000
+
+# Terminal 2: Start FastAPI Backend
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+4. Execute Self-Healing MLOps Retraining Loop
+To manually extract multi-language production logs, run Groq weak supervision, and challenge the production model:
+
+Bash
 python ml/training/retrain_pipeline.py
-📂 Repository StructurePlaintext├── .github/workflows/    # GitHub Actions CI/CD pipelines
-├── backend/              # FastAPI server, SQLAlchemy schemas, business logic
-├── ml/
-│   ├── data/             # Sourcing scripts, weak-label pipelines, test splits
-│   └── training/         # DistilBERT training, Evidently configs, Prefect DAGs
-├── docker-compose.yml    # Multi-container local infrastructure
-├── Dockerfile            # Optimized 1.45GB CPU-only container definition
-├── app.py                # Cloud entrypoint (Trojan Horse FastAPI mount)
-└── requirements.txt      # Production dependencies
+👨‍💻 Author
+Ankit Barik
 ```
