@@ -131,7 +131,7 @@ flowchart TD
 ### 1. Clone & Setup Environment
 
 ```bash
-git clone [https://github.com/Ankit03/sentinel.git](https://github.com/ankit5803/sentinel.git)
+git clone [https://github.com/ankit5803/sentinel.git](https://github.com/ankit5803/sentinel.git)
 cd sentinel
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
