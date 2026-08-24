@@ -131,7 +131,7 @@ flowchart TD
 ### 1. Clone & Setup Environment
 
 ```bash
-git clone [https://github.com/Ankit03/sentinel.git](https://github.com/Ankit03/sentinel.git)
+git clone [https://github.com/Ankit03/sentinel.git](https://github.com/ankit5803/sentinel.git)
 cd sentinel
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -173,7 +173,7 @@ python ml/training/retrain_pipeline.py
 
 **Ankit Barik**
 
-- **GitHub:** [@Ankit03](https://github.com/Ankit03)
+- **GitHub:** [@Ankit03](https://github.com/ankit5803)
 - **Hugging Face:** [@Ankit03](https://huggingface.co/Ankit03)
 - **Role:** AI/ML Engineer (2025 Grad)
 
