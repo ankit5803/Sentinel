@@ -6,7 +6,7 @@ Markdown
 
 **Production Real-Time AI Threat Detection & Self-Healing MLOps Platform**
 
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel&logoColor=white)](https://sentinel-pi-gilt.vercel.app/
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel&logoColor=white)](https://sentinel-pi-gilt.vercel.app/)
 [![Hugging Face Spaces](https://img.shields.io/badge/Backend-HF%20Spaces-FFD21E?logo=huggingface&logoColor=black)](https://ankit03-sentinel-api.hf.space)
 [![Render](https://img.shields.io/badge/Database-Render%20Postgres-46E3B7?logo=render&logoColor=black)](https://render.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
