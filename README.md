@@ -6,7 +6,7 @@ Markdown
 
 **Production Real-Time AI Threat Detection & Self-Healing MLOps Platform**
 
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel&logoColor=white)](https://sentinel-pi-gilt.vercel.app/)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel&logoColor=white)](https://vercel.com)
 [![Hugging Face Spaces](https://img.shields.io/badge/Backend-HF%20Spaces-FFD21E?logo=huggingface&logoColor=black)](https://ankit03-sentinel-api.hf.space)
 [![Render](https://img.shields.io/badge/Database-Render%20Postgres-46E3B7?logo=render&logoColor=black)](https://render.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -15,7 +15,7 @@ Markdown
 [![Prefect](https://img.shields.io/badge/Prefect-024DFD?logo=prefect&logoColor=white)](https://www.prefect.io/)
 [![Groq](https://img.shields.io/badge/LLM%20Teacher-Groq%20Llama%203.3-F55036)](https://groq.com)
 
-[🌐 Live Dashboard (Vercel)](#) • [⚡ Live API Endpoint (HF Space)](https://ankit03-sentinel-api.hf.space) • [📦 Model Hub Weights](https://huggingface.co/Ankit03/sentinel-model-weights)
+[🌐 Live Dashboard (Vercel)](https://sentinel-pi-gilt.vercel.app/) • [⚡ Live API Endpoint (HF Space)](https://ankit03-sentinel-api.hf.space) • [📦 Model Hub Weights](https://huggingface.co/Ankit03/sentinel-model-weights)
 
 </div>
 
