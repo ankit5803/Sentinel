@@ -94,10 +94,12 @@ app = FastAPI(
 
 # Helper function to run model inference within the ZeroGPU context
 @gpu_decorator
-def run_inference(pipeline_model, text: str):
+def run_inference(lang_label: str, text: str):
     """
     Executes model inference under ZeroGPU hardware context.
+    We pass the string label instead of the pipeline object to avoid ZeroGPU type errors.
     """
+    pipeline_model = models[lang_label]
     return pipeline_model(text, truncation=True, max_length=128)[0]
 
 @app.get("/health", summary="Health Check Endpoint")
@@ -119,22 +121,19 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
     try:
         lang = langdetect.detect(request.text)
         if is_hinglish or lang in ["hi", "ne", "ur", "id", "so"]:
-            selected_pipeline = models["hinglish"]
             detected_lang_label = "hinglish"
         else:
-            selected_pipeline = models["english"]
             detected_lang_label = "english"
     except:
         if is_hinglish:
-            selected_pipeline = models["hinglish"]
             detected_lang_label = "hinglish"
         else:
-            selected_pipeline = models["english"]
             detected_lang_label = "english"
 
     # 2. ML Inference (Wrapped for ZeroGPU)
     try:
-        prediction = run_inference(selected_pipeline, request.text)
+        # Pass the string label (e.g., "english" or "hinglish") instead of the pipeline object
+        prediction = run_inference(detected_lang_label, request.text)
         
         if prediction['label'] == 'SAFE':
             threat_prob = 1.0 - prediction['score']
@@ -142,7 +141,8 @@ def analyze_text(request: AnalyzeRequest, db: Session = Depends(get_db)):
             threat_prob = prediction['score']
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Model inference failed: {str(e)}")
+        # Using repr(e) gives us much better error details if anything else fails
+        raise HTTPException(status_code=500, detail=f"Model inference failed: {repr(e)}")
 
     # 3. Apply Contextual Risk Engine
     risk_decision = risk_engine.calculate_risk(request.text, threat_prob)
