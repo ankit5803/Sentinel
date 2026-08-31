@@ -2,23 +2,24 @@
 
 import { useState, useEffect } from "react";
 import {
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
   Activity,
   Target,
   AlertTriangle,
-  Terminal,
-  Cpu,
+  Zap,
+  Radar,
+  CheckCircle2,
+  AlertOctagon,
+  Eye,
+  Shield,
 } from "lucide-react";
 
 const SCAN_LOGS = [
-  "Establishing secure API link...",
-  "Tokenizing input sequence...",
-  "Loading DistilBERT weights...",
-  "Executing PyTorch tensor math...",
-  "Evaluating contextual risk factors...",
-  "Finalizing threat matrix...",
+  "ESTABLISHING SECURE UPLINK...",
+  "TOKENIZING SEQUENCE PATTERNS...",
+  "EXTRACTING LINGUISTIC CONTEXT...",
+  "CALCULATING THREAT VECTORS...",
+  "EVALUATING RISK MATRIX...",
+  "SYNTHESIZING VERDICT...",
 ];
 
 export default function SentinelDashboard() {
@@ -27,15 +28,19 @@ export default function SentinelDashboard() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
   const [scanText, setScanText] = useState(SCAN_LOGS[0]);
+  const [mounted, setMounted] = useState(false);
 
-  // Dynamic terminal text effect during loading
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!loading) return;
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % SCAN_LOGS.length;
       setScanText(SCAN_LOGS[i]);
-    }, 400); // Changes text every 400ms for that high-tech scanning feel
+    }, 400);
     return () => clearInterval(interval);
   }, [loading]);
 
@@ -56,204 +61,315 @@ export default function SentinelDashboard() {
       );
 
       if (!response.ok)
-        throw new Error("Failed to communicate with the Sentinel API");
+        throw new Error("Neural link severed. API unavailable.");
 
       const data = await response.json();
-      setResult(data);
+      setTimeout(() => setResult(data), 600);
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      setError(err.message || "Anomalous error detected.");
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 600);
     }
   };
 
-  const getRiskColor = (level: string) => {
+  // Fluid Liquid Theme Engine
+  const getTheme = (level: string | null) => {
     switch (level) {
       case "SAFE":
-        return "text-emerald-400 border-emerald-500/30 bg-emerald-500/10 shadow-emerald-900/20";
+        return {
+          blob1: "bg-emerald-600",
+          blob2: "bg-teal-500",
+          blob3: "bg-green-700",
+          accent: "text-emerald-400",
+          border: "border-emerald-500/30",
+          bg: "bg-emerald-950/10",
+          icon: <CheckCircle2 className="w-12 h-12 text-emerald-400" />,
+        };
       case "MODERATE":
-        return "text-yellow-400 border-yellow-500/30 bg-yellow-500/10 shadow-yellow-900/20";
+      case "REVIEW":
+        return {
+          blob1: "bg-amber-600",
+          blob2: "bg-yellow-500",
+          blob3: "bg-orange-600",
+          accent: "text-amber-400",
+          border: "border-amber-500/30",
+          bg: "bg-amber-950/10",
+          icon: <Eye className="w-12 h-12 text-amber-400" />,
+        };
+      case "HIGH_RISK":
       case "HIGH":
-        return "text-orange-500 border-orange-500/30 bg-orange-500/10 shadow-orange-900/20";
-      case "CRITICAL":
-        return "text-red-500 border-red-500/30 bg-red-500/10 shadow-red-900/20";
+      case "VIOLENT_THREAT":
+        return {
+          blob1: "bg-rose-700",
+          blob2: "bg-red-600",
+          blob3: "bg-orange-700",
+          accent: "text-rose-500",
+          border: "border-rose-500/40",
+          bg: "bg-rose-950/20",
+          icon: <AlertOctagon className="w-12 h-12 text-rose-500" />,
+        };
       default:
-        return "text-gray-400 border-gray-500/30 bg-gray-500/10 shadow-gray-900/20";
+        // Idle State
+        return {
+          blob1: "bg-indigo-700",
+          blob2: "bg-purple-600",
+          blob3: "bg-blue-800",
+          accent: "text-indigo-400",
+          border: "border-white/10",
+          bg: "bg-white/[0.02]",
+          icon: <Radar className="w-12 h-12 text-indigo-400" />,
+        };
     }
   };
 
+  const theme = getTheme(result?.risk_level || null);
+
+  if (!mounted) return null;
+
   return (
-    <div className="p-4 md:p-8 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header - Glassmorphism */}
-        <header className="flex items-center space-x-4 border border-slate-800/60 bg-slate-900/50 backdrop-blur-md p-6 rounded-2xl shadow-2xl">
-          <div className="relative">
-            <div className="absolute inset-0 bg-indigo-500 blur-lg opacity-40 animate-pulse"></div>
-            <Shield className="w-12 h-12 text-indigo-400 relative z-10" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-              SENTINEL CORE{" "}
-              <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded-full border border-indigo-500/30 uppercase tracking-widest font-mono">
-                v1.0 Live
-              </span>
+    <div className="min-h-screen bg-[#030305] text-white selection:bg-indigo-500/30 font-sans overflow-hidden relative flex flex-col items-center justify-center py-20 px-4 md:px-12">
+      {/* --- FLUID AURORA BACKGROUND ENGINE --- */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Deep background color to anchor the blobs */}
+        <div className="absolute inset-0 bg-[#030305] z-0"></div>
+
+        {/* Layer 1: The Blobs */}
+        <div className="absolute inset-0 z-0 opacity-40 mix-blend-screen filter blur-[100px]">
+          <div
+            className={`absolute top-0 left-[-10%] w-[60vw] h-[60vw] rounded-full mix-blend-multiply transition-colors duration-[2000ms] ease-in-out wavy-blob-1 ${theme.blob1}`}
+          ></div>
+          <div
+            className={`absolute top-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full mix-blend-multiply transition-colors duration-[2000ms] ease-in-out wavy-blob-2 ${theme.blob2}`}
+          ></div>
+          <div
+            className={`absolute bottom-[-10%] left-[20%] w-[70vw] h-[70vw] rounded-full mix-blend-multiply transition-colors duration-[2000ms] ease-in-out wavy-blob-3 ${theme.blob3}`}
+          ></div>
+        </div>
+
+        {/* Layer 2: Noise Texture overlay for that premium matte glass look */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay z-0"></div>
+      </div>
+
+      {/* --- MAIN CONTENT (Glassmorphism UI) --- */}
+      <div className="w-full max-w-6xl relative z-10 flex flex-col gap-12">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="space-y-2">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white drop-shadow-lg">
+              SENTINEL
             </h1>
-            <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
-              <Cpu className="w-4 h-4" /> Native PyTorch CPU Inference Engine
+            <p className="text-sm md:text-base font-mono tracking-[0.3em] text-white/70 uppercase">
+              Autonomous Threat Intelligence v2.0
             </p>
+          </div>
+          <div className="flex items-center gap-3 px-5 py-3 rounded-full border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl">
+            <div className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </div>
+            <span className="text-xs font-bold tracking-widest uppercase text-white/90">
+              Engine Online
+            </span>
           </div>
         </header>
 
-        {/* Input Section */}
-        <div className="bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-2xl transition-all duration-300 focus-within:border-indigo-500/50 focus-within:shadow-[0_0_30px_-5px_rgba(99,102,241,0.15)]">
-          <label className="flex items-center gap-2 text-sm font-semibold text-indigo-300 mb-3 uppercase tracking-wider">
-            <Terminal className="w-4 h-4" /> Target Payload
-          </label>
-          <textarea
-            className="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all outline-none resize-none font-mono text-sm leading-relaxed"
-            rows={4}
-            placeholder="> Input communication intercept for real-time risk evaluation... (English/Hinglish supported)"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                analyzeText();
-              }
-            }}
-          />
-          <div className="mt-4 flex items-center justify-between">
-            {/* Dynamic Loading Terminal */}
-            <div className="text-indigo-400 font-mono text-xs flex items-center gap-2 h-6">
-              {loading && (
-                <>
-                  <div className="w-2 h-4 bg-indigo-400 animate-pulse"></div>
-                  {scanText}
-                </>
-              )}
-            </div>
+        {/* Input Stage */}
+        <div
+          className={`relative group transition-all duration-1000 ${result ? "opacity-90 scale-[0.99]" : "scale-100"}`}
+        >
+          <div className="relative bg-[#050508]/60 backdrop-blur-3xl rounded-[32px] border border-white/10 overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]">
+            {/* Loading laser beam effect */}
+            {loading && (
+              <div
+                className="absolute top-0 left-0 h-[2px] bg-white shadow-[0_0_20px_#fff] animate-[sweep_2s_ease-in-out_infinite]"
+                style={{ width: "30%" }}
+              ></div>
+            )}
 
-            <button
-              onClick={analyzeText}
-              disabled={loading || !text.trim()}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 flex items-center space-x-2 shadow-lg hover:shadow-indigo-500/25 border border-indigo-400/20 hover:-translate-y-0.5"
-            >
-              {loading ? (
-                <>
-                  <Activity className="w-5 h-5 animate-spin" />
-                  <span>ANALYZING...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldAlert className="w-5 h-5" />
-                  <span>SCAN PAYLOAD</span>
-                </>
-              )}
-            </button>
+            <textarea
+              className="w-full min-h-[180px] bg-transparent p-10 text-xl md:text-2xl font-light text-white/90 placeholder-white/30 focus:outline-none resize-none transition-all leading-relaxed"
+              placeholder="Intercept data stream... (Type English or Hinglish)"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  analyzeText();
+                }
+              }}
+            />
+
+            <div className="flex flex-col md:flex-row items-center justify-between p-6 border-t border-white/10 bg-black/20">
+              <div className="h-8 flex items-center font-mono text-xs tracking-[0.2em] mb-4 md:mb-0">
+                {loading ? (
+                  <span className="flex items-center gap-3 text-white">
+                    <Activity className="w-4 h-4 animate-spin" /> {scanText}
+                  </span>
+                ) : (
+                  <span className="text-white/40">
+                    AWAITING PAYLOAD INGESTION
+                  </span>
+                )}
+              </div>
+
+              <button
+                onClick={analyzeText}
+                disabled={loading || !text.trim()}
+                className="w-full md:w-auto relative px-10 py-4 bg-white text-black font-bold tracking-[0.2em] text-sm uppercase rounded-2xl overflow-hidden transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 group/btn shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.8)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                <span className="relative flex items-center justify-center gap-3">
+                  <Zap className="w-4 h-4" /> Initialize Scan
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-950/50 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center space-x-3 backdrop-blur-sm animate-in fade-in zoom-in duration-300">
-            <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-            <p className="font-mono text-sm">{error}</p>
-          </div>
-        )}
-
-        {/* Results Section */}
+        {/* Results Dashboard */}
         {result && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-8 fade-in duration-700 ease-out">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Main Risk Level Card */}
-              <div
-                className={`col-span-1 md:col-span-3 rounded-2xl p-8 border flex items-center justify-between backdrop-blur-md transition-all hover:scale-[1.01] ${getRiskColor(result.risk_level)}`}
-              >
-                <div className="space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-80 flex items-center gap-2">
-                    <Activity className="w-4 h-4" /> Threat Classification
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 transition-all duration-1000 ease-out animate-in slide-in-from-bottom-24 fade-in">
+            {/* Main Verdict */}
+            <div
+              className={`col-span-1 lg:col-span-8 rounded-[32px] p-8 md:p-12 border backdrop-blur-3xl flex flex-col justify-between relative overflow-hidden transition-all duration-700 shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] ${theme.bg} ${theme.border}`}
+            >
+              <div className="absolute top-0 right-0 p-12 opacity-20 scale-150 transform -translate-y-1/4 translate-x-1/4">
+                {theme.icon}
+              </div>
+
+              <div className="relative z-10">
+                <p className="font-mono text-xs tracking-[0.3em] uppercase opacity-70 mb-4 flex items-center gap-3 text-white">
+                  Primary Classification{" "}
+                  <span className="w-16 h-[1px] bg-white/30"></span>
+                </p>
+                <h2
+                  className={`text-5xl md:text-7xl font-black tracking-tighter ${theme.accent} drop-shadow-2xl`}
+                >
+                  {result.risk_level.replace("_", " ")}
+                </h2>
+              </div>
+
+              <div className="mt-12 flex flex-col md:flex-row gap-10 relative z-10">
+                <div>
+                  <p className="font-mono text-[10px] tracking-[0.2em] text-white/50 mb-2">
+                    PROBABILITY INDEX
                   </p>
-                  <h3 className="text-5xl font-black tracking-tight drop-shadow-md">
-                    {result.risk_level}
-                  </h3>
+                  <p className="text-5xl font-light tracking-tight text-white">
+                    {(result.threat_probability * 100).toFixed(1)}
+                    <span className="text-2xl text-white/40 ml-1">%</span>
+                  </p>
                 </div>
-                <div className="relative">
-                  {/* Glowing background behind icon */}
-                  <div className="absolute inset-0 bg-current blur-2xl opacity-20"></div>
-                  {result.risk_level === "SAFE" ? (
-                    <ShieldCheck className="w-16 h-16 opacity-90 animate-pulse relative z-10" />
-                  ) : (
-                    <AlertTriangle className="w-16 h-16 opacity-90 animate-pulse relative z-10" />
-                  )}
-                </div>
-              </div>
-
-              {/* Threat Probability */}
-              <div className="bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl hover:-translate-y-1 hover:border-indigo-500/30 transition-all duration-300 group">
-                <div className="flex items-center space-x-2 mb-4 text-slate-400 group-hover:text-indigo-300 transition-colors">
-                  <Activity className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Model Probability
-                  </span>
-                </div>
-                <div className="text-4xl font-black text-slate-100 flex items-baseline gap-1">
-                  {(result.threat_probability * 100).toFixed(1)}
-                  <span className="text-lg text-slate-500 font-medium">%</span>
-                </div>
-              </div>
-
-              {/* Immediacy */}
-              <div className="bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl hover:-translate-y-1 hover:border-orange-500/30 transition-all duration-300 group">
-                <div className="flex items-center space-x-2 mb-4 text-slate-400 group-hover:text-orange-300 transition-colors">
-                  <AlertTriangle className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Immediacy
-                  </span>
-                </div>
-                <div className="text-4xl font-black text-slate-100">
-                  {result.immediacy}
-                </div>
-              </div>
-
-              {/* Target Identified */}
-              <div className="bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 shadow-xl hover:-translate-y-1 hover:border-red-500/30 transition-all duration-300 group">
-                <div className="flex items-center space-x-2 mb-4 text-slate-400 group-hover:text-red-300 transition-colors">
-                  <Target className="w-5 h-5" />
-                  <span className="text-xs font-bold uppercase tracking-wider">
-                    Targeted Attack
-                  </span>
-                </div>
-                <div className="text-4xl font-black text-slate-100">
-                  {result.target_identified ? "DETECTED" : "NONE"}
+                <div className="hidden md:block w-[1px] bg-white/10"></div>
+                <div>
+                  <p className="font-mono text-[10px] tracking-[0.2em] text-white/50 mb-2">
+                    IMMEDIACY
+                  </p>
+                  <p className="text-5xl font-light tracking-tight text-white">
+                    {result.immediacy}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* AI Reasoning Log - Terminal Style */}
-            <div className="bg-black/80 backdrop-blur-md border border-slate-800 rounded-2xl p-1 shadow-2xl overflow-hidden">
-              <div className="bg-slate-900 px-4 py-2 flex items-center gap-2 border-b border-slate-800">
-                <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-                <span className="text-xs font-mono text-slate-500 ml-2">
-                  sys_log_output.sh
-                </span>
+            {/* Target Card */}
+            <div className="col-span-1 lg:col-span-4 rounded-[32px] p-8 border border-white/10 bg-black/40 backdrop-blur-3xl flex flex-col justify-center items-center text-center group hover:bg-black/60 transition-colors shadow-[0_8px_32px_0_rgba(0,0,0,0.4)]">
+              <div
+                className={`p-5 rounded-full mb-6 transition-all duration-500 group-hover:scale-110 ${result.target_identified ? "bg-red-500/20 text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.3)]" : "bg-emerald-500/20 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)]"}`}
+              >
+                <Target className="w-10 h-10" />
               </div>
-              <div className="p-6">
-                <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2">
-                  <Terminal className="w-4 h-4" /> AI Engine Reasoning Log
-                </h4>
-                <p className="text-green-400 leading-relaxed font-mono text-sm">
-                  <span className="text-slate-600 select-none mr-2">
-                    root@sentinel:~#
-                  </span>
-                  {result.reason}
-                </p>
+              <p className="font-mono text-xs tracking-[0.3em] text-white/50 mb-3">
+                TARGET LOCK
+              </p>
+              <h3 className="text-3xl font-semibold tracking-tight text-white">
+                {result.target_identified ? "Confirmed" : "Negative"}
+              </h3>
+            </div>
+
+            {/* AI Reasoning Block */}
+            <div className="col-span-1 lg:col-span-12 rounded-[32px] p-8 md:p-10 border border-white/10 bg-black/40 backdrop-blur-3xl relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.4)]">
+              <div className="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-b from-white to-white/10"></div>
+              <div className="flex items-start gap-8">
+                <div className="mt-1 hidden md:block">
+                  <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-md">
+                    <Shield className="w-5 h-5 text-white/80" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-white/50 mb-4">
+                    RISK ENGINE SYNTHESIS LOG
+                  </p>
+                  <p className="text-lg md:text-2xl font-light text-white/90 leading-relaxed">
+                    {result.reason}
+                  </p>
+                  <div className="mt-6 flex flex-wrap items-center gap-4">
+                    <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-mono text-white/60 tracking-widest uppercase">
+                      LANG:{" "}
+                      {result.language_detected?.toUpperCase() || "UNKNOWN"}
+                    </span>
+                    <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-mono text-white/60 tracking-widest uppercase">
+                      MODEL: DISTILBERT_V2
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* --- INJECTED CSS FOR FLUID AURORA ANIMATIONS --- */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes sweep {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
+        }
+
+        /* Organic shape shifting */
+        @keyframes shapeShift {
+          0% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+          25% { border-radius: 50% 50% 30% 70% / 70% 30% 70% 30%; }
+          50% { border-radius: 70% 30% 50% 50% / 30% 70% 30% 70%; }
+          75% { border-radius: 30% 70% 30% 70% / 50% 50% 70% 30%; }
+          100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+        }
+
+        /* Floating and rotating */
+        @keyframes float1 {
+          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+          33% { transform: translate(10vw, -10vh) rotate(120deg) scale(1.1); }
+          66% { transform: translate(-10vw, 15vh) rotate(240deg) scale(0.9); }
+          100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+        }
+
+        @keyframes float2 {
+          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+          33% { transform: translate(-15vw, 10vh) rotate(-120deg) scale(0.9); }
+          66% { transform: translate(10vw, -15vh) rotate(-240deg) scale(1.2); }
+          100% { transform: translate(0, 0) rotate(-360deg) scale(1); }
+        }
+
+        @keyframes float3 {
+          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+          50% { transform: translate(15vw, 5vh) rotate(180deg) scale(1.1); }
+          100% { transform: translate(0, 0) rotate(360deg) scale(1); }
+        }
+
+        /* Combine animations on the blobs */
+        .wavy-blob-1 {
+          animation: shapeShift 20s infinite alternate, float1 25s infinite ease-in-out;
+        }
+        .wavy-blob-2 {
+          animation: shapeShift 25s infinite alternate-reverse, float2 30s infinite ease-in-out;
+        }
+        .wavy-blob-3 {
+          animation: shapeShift 15s infinite alternate, float3 35s infinite ease-in-out;
+        }
+      `,
+        }}
+      />
     </div>
   );
 }
